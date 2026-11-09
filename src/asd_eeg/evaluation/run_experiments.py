@@ -12,11 +12,10 @@ from uuid import uuid4
 import joblib
 import numpy as np
 import pandas as pd
-from sklearn.metrics import roc_auc_score
 
 from asd_eeg.config import Config
 from asd_eeg.contracts import FeatureDataset
-from asd_eeg.evaluation.metrics import classification_metrics
+from asd_eeg.evaluation.metrics import classification_metrics, fold_auc
 from asd_eeg.evaluation.splits import save_folds
 from asd_eeg.training.model import MODELS, fit_model
 
@@ -100,8 +99,9 @@ def run_evaluation(dataset: FeatureDataset, output: str | Path) -> Path:
                     predictions.append({"subject_id": sid, "fold": fold, "model": name,
                                         "true_label": int(label), "predicted_label": int(pred),
                                         "decision_score": float(score)})
+                auc = fold_auc(dataset.y[test], scores)
                 auc_rows.append({"model": name, "fold": fold,
-                                 "auc": float(roc_auc_score(dataset.y[test], scores))})
+                                 "auc": float("nan") if auc is None else auc})
         frame = pd.DataFrame(predictions)
         frame.to_csv(run / "oof_predictions.csv", index=False)
         pd.DataFrame(auc_rows).to_csv(run / "fold_auc.csv", index=False)
@@ -109,9 +109,17 @@ def run_evaluation(dataset: FeatureDataset, output: str | Path) -> Path:
         for name in MODELS:
             rows = frame[frame.model == name]
             metrics[name] = classification_metrics(rows.true_label, rows.predicted_label)
-            fold_aucs = [r["auc"] for r in auc_rows if r["model"] == name]
-            metrics[name]["mean_fold_auc"] = float(np.mean(fold_aucs))
-            metrics[name]["std_fold_auc"] = float(np.std(fold_aucs))
+            fold_aucs = np.array(
+                [r["auc"] for r in auc_rows if r["model"] == name], dtype=float
+            )
+            defined = fold_aucs[~np.isnan(fold_aucs)]
+            metrics[name]["mean_fold_auc"] = (
+                float(np.mean(defined)) if len(defined) else None
+            )
+            metrics[name]["std_fold_auc"] = (
+                float(np.std(defined)) if len(defined) else None
+            )
+            metrics[name]["fold_auc_count"] = int(len(defined))
             metrics[name]["fit_predict_seconds"] = timings[name]
         (run / "metrics.json").write_text(json.dumps(metrics, indent=2), encoding="utf-8")
         pd.DataFrame([{ "model": name, **{k: v for k, v in value.items() if k != "confusion_matrix"}}
