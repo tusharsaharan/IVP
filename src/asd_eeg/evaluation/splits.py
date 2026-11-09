@@ -30,10 +30,20 @@ def make_subject_folds(
     Raises if subject IDs repeat, a class is missing, or fewer than two
     subjects per class exist.
     """
-    subjects = np.asarray(subject_ids, dtype=str)
-    labels = np.asarray(y, dtype=int)
-    if subjects.shape != labels.shape:
-        raise ValueError("Subject IDs and labels must align.")
+    subjects = np.asarray(subject_ids)
+    labels = np.asarray(y)
+    if subjects.ndim != 1 or not len(subjects) or subjects.shape != labels.shape:
+        raise ValueError("Subject IDs and labels must be nonempty aligned vectors.")
+    if pd.isna(subjects).any() or not all(isinstance(subject, str) for subject in subjects):
+        raise ValueError("Subject IDs must be nonempty strings.")
+    subjects = subjects.astype(str)
+    if np.any(np.char.strip(subjects.astype(str)) == ""):
+        raise ValueError("Subject IDs must be nonempty strings.")
+    if not np.isin(labels, [0, 1]).all():
+        raise ValueError("Labels must be 0 (Control) or 1 (ASD); do not coerce diagnosis labels.")
+    labels = labels.astype(int)
+    if isinstance(n_splits, bool) or not isinstance(n_splits, (int, np.integer)) or n_splits < 2:
+        raise ValueError("Request at least two integer folds.")
     if len(set(subjects.tolist())) != len(subjects):
         raise ValueError("Feature rows must represent unique subjects.")
     if set(np.unique(labels).tolist()) != {0, 1}:
@@ -48,17 +58,17 @@ def make_subject_folds(
         fold_of[test] = fold
     frame = pd.DataFrame({"subject_id": subjects, "fold": fold_of, "label": labels})
     # Every subject tested exactly once; train/test disjoint by construction.
-    assert frame.groupby("subject_id").size().eq(1).all()
-    assert set(frame["fold"]) == set(range(folds))
+    if (not frame.groupby("subject_id").size().eq(1).all()
+            or set(frame["fold"]) != set(range(folds))):
+        raise ValueError("Subject fold assignment is incomplete or contains duplicate subjects.")
     return frame
 
 
 def save_folds(frame: pd.DataFrame, path: str | Path) -> Path:
     """Write the folds table. The caller picks the directory.
 
-    Real runs use their ``results/<run_id>/`` folder; synthetic smoke runs
-    use ``results/_synthetic_smoke/``. Never write synthetic folds to
-    ``results/`` proper.
+    Real runs use ``results/<run_id>/``; labelled software checks use
+    their separate ``artifacts/software-check/<check_id>/runs/`` folder.
     """
     path = Path(path)
     path.parent.mkdir(parents=True, exist_ok=True)

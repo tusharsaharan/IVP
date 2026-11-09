@@ -49,6 +49,8 @@ Fixed-setting stratified subject-wise cross-validation is used. Fold count is re
 
 Classification metrics are calculated from all out-of-fold labels. AUC is calculated within each fold and averaged. The initial protocol supplies no confidence intervals, label-permutation significance tests, noise/hardware experiments, or cross-dataset validation; the report must not claim those experiments. Repeated interactive evaluation does not turn test folds into a validation set for choosing a winning configuration.
 
+The evaluation module now freezes subject-fold assignments once per run and recomputes all classification and AUC summaries through the shared `summarize_oof` function. AUC summaries include the mean, population standard deviation (`ddof=0`), and number of defined folds; standard deviation is descriptive fold-to-fold spread, not a confidence interval. Single-class fold AUC is undefined and omitted from its summary. OOF validation rejects duplicates, differing model cohorts/partitions, conflicting labels, nonfinite scores, and invalid fold IDs. Split creation never truncates fractional labels into diagnosis classes. Source-commit provenance is tied to the installed source checkout, not the caller's current directory. These integration checks preserve the existing fixed settings and inference bundle format.
+
 ## Explanation
 
 Connection sensitivity replaces the median and IQR of one edge with raw-feature medians from that model's training subjects and recomputes its decision score. This is an input perturbation check; correlated-feature changes can be off-distribution. It is not a causal biomarker.

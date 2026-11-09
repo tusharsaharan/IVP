@@ -75,7 +75,7 @@ def test_metrics_recomputed_from_oof_match_saved(completed_check):
     for name in MODELS:
         for key in (
             "subjects", "accuracy", "balanced_accuracy", "macro_f1",
-            "sensitivity", "specificity", "mean_fold_auc", "fold_auc_count",
+            "sensitivity", "specificity", "mean_fold_auc", "std_fold_auc", "fold_auc_count",
         ):
             assert recomputed[name][key] == pytest.approx(saved[name][key]), (name, key)
         assert recomputed[name]["confusion_matrix"] == saved[name]["confusion_matrix"]

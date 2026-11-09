@@ -4,6 +4,8 @@ import hashlib
 import importlib.metadata
 import json
 import platform
+import subprocess
+import sys
 import time
 from datetime import datetime, timezone
 from pathlib import Path
@@ -15,8 +17,8 @@ import pandas as pd
 
 from asd_eeg.config import Config
 from asd_eeg.contracts import FeatureDataset
-from asd_eeg.evaluation.metrics import classification_metrics, fold_auc
-from asd_eeg.evaluation.splits import save_folds
+from asd_eeg.evaluation.metrics import fold_auc, summarize_oof
+from asd_eeg.evaluation.splits import make_subject_folds, save_folds
 from asd_eeg.training.model import MODELS, fit_model
 
 
@@ -27,15 +29,17 @@ def software_versions() -> dict:
 
 
 def git_commit() -> str:
-    """Current commit hash for provenance, or 'unknown' outside git."""
-    import subprocess
+    """Source checkout commit, independent of the caller's working directory."""
+    root = Path(__file__).resolve().parents[3]
+    if not (root / ".git").exists():
+        return "unknown"
 
     try:
         return subprocess.run(
             ["git", "rev-parse", "HEAD"], capture_output=True, text=True,
-            timeout=10,
+            timeout=10, check=True, cwd=root,
         ).stdout.strip() or "unknown"
-    except (OSError, ValueError):
+    except (OSError, ValueError, subprocess.SubprocessError):
         return "unknown"
 
 
@@ -44,8 +48,6 @@ def run_evaluation(dataset: FeatureDataset, output: str | Path) -> Path:
     config = Config.from_dict(dataset.metadata["config"])
     if dataset.metadata["config_id"] != config.id or dataset.X.shape[1] != config.n_features:
         raise ValueError("Feature configuration does not match the evaluation input.")
-    from asd_eeg.evaluation.splits import make_subject_folds
-
     fold_frame = make_subject_folds(
         dataset.subject_ids, dataset.y, config.evaluation.folds, config.evaluation.seed,
     )
@@ -77,7 +79,8 @@ def run_evaluation(dataset: FeatureDataset, output: str | Path) -> Path:
         for fold in range(folds):
             test_ids = fold_frame[fold_frame.fold == fold].subject_id.tolist()
             train_ids = fold_frame[fold_frame.fold != fold].subject_id.tolist()
-            assert not set(train_ids) & set(test_ids)
+            if set(train_ids) & set(test_ids):
+                raise ValueError("Subject leakage detected in fold generation.")
             train = np.array([order[sid] for sid in train_ids])
             test = np.array([order[sid] for sid in test_ids])
             fold_path = run / f"fold_{fold}"
@@ -105,21 +108,8 @@ def run_evaluation(dataset: FeatureDataset, output: str | Path) -> Path:
         frame = pd.DataFrame(predictions)
         frame.to_csv(run / "oof_predictions.csv", index=False)
         pd.DataFrame(auc_rows).to_csv(run / "fold_auc.csv", index=False)
-        metrics = {}
+        metrics = summarize_oof(frame)
         for name in MODELS:
-            rows = frame[frame.model == name]
-            metrics[name] = classification_metrics(rows.true_label, rows.predicted_label)
-            fold_aucs = np.array(
-                [r["auc"] for r in auc_rows if r["model"] == name], dtype=float
-            )
-            defined = fold_aucs[~np.isnan(fold_aucs)]
-            metrics[name]["mean_fold_auc"] = (
-                float(np.mean(defined)) if len(defined) else None
-            )
-            metrics[name]["std_fold_auc"] = (
-                float(np.std(defined)) if len(defined) else None
-            )
-            metrics[name]["fold_auc_count"] = int(len(defined))
             metrics[name]["fit_predict_seconds"] = timings[name]
         (run / "metrics.json").write_text(json.dumps(metrics, indent=2), encoding="utf-8")
         pd.DataFrame([{ "model": name, **{k: v for k, v in value.items() if k != "confusion_matrix"}}
@@ -140,13 +130,13 @@ def main(argv=None) -> int:
     from asd_eeg.features.cache import load_features
 
     parser = argparse.ArgumentParser(description="Run fixed-setting subject-wise comparisons.")
-    parser.add_argument("--features", default="artifacts/features.npz")
+    parser.add_argument("--features", default="artifacts/features/subject_features.npz")
     parser.add_argument("--output", default="results")
     args = parser.parse_args(argv)
     try:
         run = run_evaluation(load_features(args.features), args.output)
     except (OSError, ValueError, KeyError, RuntimeError) as exc:
-        print(f"Error: {exc}")
+        print(f"Error: {exc}", file=sys.stderr)
         return 1
     print(json.dumps({"run": str(run)}))
     return 0
