@@ -1,5 +1,5 @@
 # Channel configuration and montage documentation for TUOS dataset
-# Dataset: The University of Sheffield (Dickinson et al. 2021, Cortex)
+# Dataset: The University of Sheffield (Dickinson et al., 2022, Cortex)
 # System: BioSemi ActiveTwo 64-channel 10-20 layout
 
 montage:
@@ -8,46 +8,46 @@ montage:
   recording_type: Continuous resting state (eyes closed)
   typical_duration_seconds: 160.0
 
-# Authoritative four-node electrode mapping
+# Authoritative four-node electrode mapping (sensor-level scalp measurement sites)
 # Fixed order: Node 0, Node 1, Node 2, Node 3
 nodes:
   - index: 0
     name: Left frontal
     channels: [F7]
-    description: Left anterior temporal/frontal lobe electrode
+    description: Scalp site F7 (left anterior lateral sensor)
   - index: 1
     name: Frontal midline
     channels: [Fz]
-    description: Superior frontal gyrus / anterior midline electrode
+    description: Scalp site Fz (frontal midline sensor)
   - index: 2
     name: Left posterior
     channels: [P1]
-    description: Left parietal / superior parietal cortex electrode
+    description: Scalp site P1 (left superior centroparietal sensor, 10-10 system)
   - index: 3
     name: Right posterior
     channels: [O2]
-    description: Right occipital cortex electrode
+    description: Scalp site O2 (right occipital sensor)
 
-# Fixed edge ordering for the 6 pairwise connections
+# Fixed edge ordering for the 6 pairwise connections between scalp nodes
 edges:
   - index: 0
     pair: [0, 1]
-    name: Left frontal <-> Frontal midline
+    name: Left frontal (F7) <-> Frontal midline (Fz)
   - index: 1
     pair: [0, 2]
-    name: Left frontal <-> Left posterior
+    name: Left frontal (F7) <-> Left posterior (P1)
   - index: 2
     pair: [0, 3]
-    name: Left frontal <-> Right posterior
+    name: Left frontal (F7) <-> Right posterior (O2)
   - index: 3
     pair: [1, 2]
-    name: Frontal midline <-> Left posterior
+    name: Frontal midline (Fz) <-> Left posterior (P1)
   - index: 4
     pair: [1, 3]
-    name: Frontal midline <-> Right posterior
+    name: Frontal midline (Fz) <-> Right posterior (O2)
   - index: 5
     pair: [2, 3]
-    name: Left posterior <-> Right posterior
+    name: Left posterior (P1) <-> Right posterior (O2)
 
 # Scalp regional groupings for multi-electrode aggregation (Aryan's reference)
 regional_groups:

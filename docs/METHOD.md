@@ -3,7 +3,8 @@
 ## Dataset selection and provenance: TUOS (The University of Sheffield)
 
 The research evaluation freezes **TUOS** as the primary real-data cohort.
-- **Reference Publication:** Dickinson, Jeste, & Milne (2021), *Electrophysiological signatures of brain aging in autism spectrum disorder*, Cortex, 142, 340-353. DOI: `10.15131/shef.data.16840351`.
+- **Reference Publication:** Dickinson, A., Jeste, S., & Milne, E. (2022), *Electrophysiological signatures of brain aging in autism spectrum disorder*, **Cortex**, 148, 139–151. DOI: [`10.1016/j.cortex.2021.09.022`](https://doi.org/10.1016/j.cortex.2021.09.022).
+- **Archive Package:** Figshare DOI: `10.15131/shef.data.16840351`.
 - **Candidate Assessment:**
   - **KAU:** Unavailable; missing raw continuous recordings, verified labels, and channel montage.
   - **OpenNeuro (ds006780, ds005512):** Present only as Git-Annex symlink pointer stubs (~200 bytes) without binary EEG data payloads.
@@ -21,7 +22,7 @@ Labels were **never** inferred from filename ordering. The original dataset exhi
 All 56 recordings were evaluated against rigorous inclusion criteria:
 - **Eligible subjects:** 45 participants (**26 ASD, 19 Control**)
 - **Exclusion criteria (11 recordings excluded):**
-  - **Montage mismatch (9 recordings: P1, P5, P6, P9, P20, P24, P25, P29, P31):** Recorded using a 128-pin BioSemi cap labeled with radial pin coordinates (`A1..A32, B1..B32, C1..C32, D1..D32`) rather than standard 10-20 international nomenclature. Excluded per project contract prohibiting uncalibrated BioSemi equivalence guessing.
+  - **Montage mismatch (9 recordings: P1, P5, P6, P9, P20, P24, P25, P29, P31):** Recorded using a 128-pin BioSemi cap labeled with radial pin coordinates (`A1..A32, B1..B32, C1..C32, D1..D32`) rather than standard 10-20 international nomenclature. Excluded per project contract prohibiting uncalibrated BioSemi equivalence guessing. *(Note: Retaining these 9 controls while excluding ASD7 and ASD17 would yield 26 ASD + 28 Control = 54 subjects).*
   - **Montage channel absence (1 recording: ASD7):** Missing channel `Fz` (channel was excluded during original author preprocessing for signal degradation).
   - **Quality control amplitude rejection (1 recording: ASD17):** Excessive motion/amplitude artifacts; only 1 clean 8-second window passed the 300 µV peak-to-peak threshold (minimum 3 required).
 
@@ -29,39 +30,39 @@ Full eligibility status and exclusion rationales are recorded in `data/metadata/
 
 ## Verified EEG preprocessing pipeline
 
-1. **Continuous signal calibration:** Scaled to standard volts.
-2. **Bandpass filtering:** Fourth-order zero-phase Butterworth filter with cutoffs at 1.0 Hz and 40.0 Hz.
-3. **Mains notch filter:** 50.0 Hz IIR notch filter with quality factor $Q = 30$.
-4. **Resampling:** Rational polyphase resampling to 128.0 Hz.
-5. **Spatial referencing:** Common average reference (CAR) across all active channels.
+1. **Continuous signal calibration:** Scaled to standard volts ($V$).
+2. **Spatial referencing:** Common average reference (CAR) across all active channels.
+3. **Mains notch filter:** 50.0 Hz IIR notch filter with quality factor $Q = 30$. *(Note on sampling: At target sampling rate 128 Hz, Nyquist is 64 Hz, so 50 Hz does not alias. The notch provides active suppression of European 50 Hz laboratory powerline interference, preventing high-amplitude mains energy from leaking through the 40 Hz filter transition band).*
+4. **Bandpass filtering:** Fourth-order zero-phase Butterworth filter with cutoffs at 1.0 Hz and 40.0 Hz (effective order 8 bidirectional `sosfiltfilt`).
+5. **Resampling:** Rational polyphase resampling from 512.0 Hz to 128.0 Hz.
 6. **Windowing & QC:** Non-overlapping 8.0-second epochs (1024 samples at 128 Hz). Windows are accepted only when:
    - All channels are finite and non-NaN.
    - Channel standard deviation exceeds $10^{-12}$ V (flat-line check).
    - Maximum peak-to-peak amplitude is $\le 300\ \mu\text{V}$.
-7. **Subject pooling:** Up to 20 accepted clean windows (160 seconds maximum) pooled per subject.
+7. **Common duration budget:** Exactly 18 accepted clean windows (144.0 seconds) are deterministically selected across each subject's recording via linear spacing, ensuring that all 45 subjects contribute identical temporal signal duration to feature extraction.
 
-## Four-node montage selection
+## Four-node scalp montage (scalp measurement sites)
 
-The verified four-node configuration spans anterior, posterior, midline, and bilateral cortical regions:
-- **Node 0 (Left frontal):** `F7`
-- **Node 1 (Frontal midline):** `Fz`
-- **Node 2 (Left posterior):** `P1`
-- **Node 3 (Right posterior):** `O2`
+The four nodes represent sensor-level **scalp measurement sites** (not direct or source-localized brain regions):
+- **Node 0 (Left frontal site):** `F7` (anterior lateral sensor)
+- **Node 1 (Frontal midline site):** `Fz` (anterior midline sensor)
+- **Node 2 (Left posterior site):** `P1` (centroparietal sensor, 10-10 system)
+- **Node 3 (Right posterior site):** `O2` (occipital sensor)
 
-Pairwise connectivity is evaluated across six edges:
-- `(0, 1)`: Left frontal — Frontal midline
-- `(0, 2)`: Left frontal — Left posterior (intra-hemispheric left)
-- `(0, 3)`: Left frontal — Right posterior (cross-hemispheric fronto-posterior)
-- `(1, 2)`: Frontal midline — Left posterior
-- `(1, 3)`: Frontal midline — Right posterior
-- `(2, 3)`: Left posterior — Right posterior (inter-hemispheric posterior)
+Pairwise sensor-level connectivity is evaluated across six edges:
+- `(0, 1)`: Left frontal (F7) — Frontal midline (Fz)
+- `(0, 2)`: Left frontal (F7) — Left posterior (P1)
+- `(0, 3)`: Left frontal (F7) — Right posterior (O2)
+- `(1, 2)`: Frontal midline (Fz) — Left posterior (P1)
+- `(1, 3)`: Frontal midline (Fz) — Right posterior (O2)
+- `(2, 3)`: Left posterior (P1) — Right posterior (O2)
 
 ## Feature extraction
 
 Features follow the strict 28-dimensional contract:
-1. **Node band powers (features 1–16):** Welch PSD normalized by 1–30 Hz total power. Relative powers for delta [1,4), theta [4,8), alpha [8,13), and beta [13,30) bands, $\log_{10}$ transformed and median aggregated across windows.
-2. **Connectivity medians (features 17–22):** Median alpha-envelope Pearson correlation across accepted windows in fixed edge order `(0,1), (0,2), (0,3), (1,2), (1,3), (2,3)`.
-3. **Connectivity variability (features 23–28):** Interquartile range (IQR, 75th percentile minus 25th percentile) of alpha-envelope correlations across accepted windows in the same edge order.
+1. **Scalp site band powers (features 1–16):** Welch PSD normalized by 1–30 Hz total power. Relative powers for delta [1,4), theta [4,8), alpha [8,13), and beta [13,30) bands, $\log_{10}$ transformed and median aggregated across the 18 accepted windows.
+2. **Connectivity medians (features 17–22):** Median alpha-envelope Pearson correlation across the 18 accepted windows in fixed edge order `(0,1), (0,2), (0,3), (1,2), (1,3), (2,3)`.
+3. **Connectivity variability (features 23–28):** Interquartile range (IQR, 75th percentile minus 25th percentile) of alpha-envelope correlations across the 18 accepted windows in the same edge order.
 
 ## Quantum and baseline models
 
@@ -71,8 +72,11 @@ Features are standardized on training folds only and bounded by $\phi = \frac{\p
 3. **Connectivity-guided quantum-kernel SVM:** Four-qubit PennyLane statevector circuit with node rotations (RY/RZ) and edge-conditioned IsingZZ entangling gates over 2 passes. Fidelity kernel $K(x,y) = |\langle\psi(x)\mid\psi(y)\rangle|^2$.
 4. **Reassigned quantum kernel:** Control experiment with fixed, label-independent permutation of edge assignments.
 
-## Scientific limitations
+## Statistical methodology & evaluation notes
 
-1. Sensor-level alpha envelope correlation reflects functional connectivity but is subject to volume conduction and common reference effects.
-2. Exact statevector simulation on 4 qubits is classically tractable and serves as an algorithmic investigation, not a demonstration of physical quantum speedup.
-3. The sample size ($N = 45$: 26 ASD, 19 Control) is appropriate for preliminary feasibility studies and out-of-fold validation, but requires multi-cohort expansion before clinical interpretation.
+1. **Confidence intervals:** Wilson score intervals apply specifically to the unweighted accuracy binomial proportion ($k / N$). They do not apply to balanced accuracy or ROC-AUC.
+2. **Recommended paired statistical tests:**
+   - **For paired classification differences:** McNemar's exact test on out-of-fold contingency tables.
+   - **For balanced accuracy and AUC uncertainty:** Stratified subject-level bootstrap (e.g., 2,000 resamples) or DeLong's test for comparing correlated ROC curves.
+3. **Sensor-level limitation:** Sensor-level alpha envelope correlation reflects functional statistical coupling between scalp measurement sites, but is subject to volume conduction and common reference effects. It must not be interpreted as anatomical or causal connectivity.
+4. **Class balance:** With 26 ASD and 19 Control subjects, the majority-class baseline is $26/45 = 57.78\%$.

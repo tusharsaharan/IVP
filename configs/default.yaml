@@ -1,4 +1,5 @@
 # Verified four-node montage for TUOS (The University of Sheffield) cohort.
+# Nodes represent scalp measurement sites (sensor-level electrodes, not direct brain regions).
 nodes:
   - name: Left frontal
     channels: [F7]
@@ -21,7 +22,7 @@ preprocessing:
   reference: average
   window_seconds: 8.0
   min_windows: 3
-  max_windows: 20
+  max_windows: 18
   max_peak_to_peak_uv: 300.0
 circuit:
   passes: 2
