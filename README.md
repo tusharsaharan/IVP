@@ -45,6 +45,12 @@ neuroq features --manifest data/metadata/recordings.csv --config configs/default
 neuroq evaluate --features artifacts/features/subject_features.npz --output results
 ```
 
+The equivalent evaluation module entry point uses the same pipeline and default feature path:
+
+```powershell
+python -m asd_eeg.evaluation.run_experiments --features artifacts/features/subject_features.npz --output results
+```
+
 Each evaluation creates a new run folder with configuration, subject folds, predictions, metrics, and per-fold model bundles. Reruns do not overwrite earlier results.
 
 ```powershell
