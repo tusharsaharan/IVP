@@ -1,0 +1,137 @@
+subject_id,group,completed_resting,status,reason
+sub-10003,TD,yes,eligible,Eligible TD resting-state participant (6 runs)
+sub-10025,TD,yes,eligible,Eligible TD resting-state participant (6 runs)
+sub-10036,TD,yes,eligible,Eligible TD resting-state participant (6 runs)
+sub-10124,TD,yes,eligible,Eligible TD resting-state participant (2 runs)
+sub-10129,TD,yes,eligible,Eligible TD resting-state participant (6 runs)
+sub-10170,TD,yes,eligible,Eligible TD resting-state participant (6 runs)
+sub-10177,TD,yes,eligible,Eligible TD resting-state participant (6 runs)
+sub-10182,TD,yes,eligible,Eligible TD resting-state participant (6 runs)
+sub-10212,TD,yes,eligible,Eligible TD resting-state participant (3 runs)
+sub-10213,TD,yes,eligible,Eligible TD resting-state participant (6 runs)
+sub-10214,TD,yes,eligible,Eligible TD resting-state participant (6 runs)
+sub-10258,TD,yes,eligible,Eligible TD resting-state participant (6 runs)
+sub-10260,TD,yes,eligible,Eligible TD resting-state participant (3 runs)
+sub-10310,TD,yes,eligible,Eligible TD resting-state participant (6 runs)
+sub-10314,TD,yes,eligible,Eligible TD resting-state participant (3 runs)
+sub-10354,TD,yes,eligible,Eligible TD resting-state participant (5 runs)
+sub-10400,TD,yes,eligible,Eligible TD resting-state participant (6 runs)
+sub-10434,TD,yes,eligible,Eligible TD resting-state participant (6 runs)
+sub-10508,TD,no,excluded,Resting-state not completed (no)
+sub-10520,TD,yes,eligible,Eligible TD resting-state participant (3 runs)
+sub-10593,TD,yes,eligible,Eligible TD resting-state participant (2 runs)
+sub-10741,TD,yes,eligible,Eligible TD resting-state participant (6 runs)
+sub-10747,TD,yes,eligible,Eligible TD resting-state participant (6 runs)
+sub-10752,TD,yes,eligible,Eligible TD resting-state participant (6 runs)
+sub-10764,TD,yes,eligible,Eligible TD resting-state participant (6 runs)
+sub-10769,TD,yes,eligible,Eligible TD resting-state participant (3 runs)
+sub-10777,TD,yes,eligible,Eligible TD resting-state participant (5 runs)
+sub-10787,TD,yes,eligible,Eligible TD resting-state participant (6 runs)
+sub-10788,TD,yes,eligible,Eligible TD resting-state participant (5 runs)
+sub-10790,TD,yes,eligible,Eligible TD resting-state participant (1 runs)
+sub-10809,TD,yes,eligible,Eligible TD resting-state participant (1 runs)
+sub-10825,TD,yes,eligible,Eligible TD resting-state participant (6 runs)
+sub-10842,TD,yes,eligible,Eligible TD resting-state participant (6 runs)
+sub-10846,TD,yes,eligible,Eligible TD resting-state participant (3 runs)
+sub-10862,TD,yes,eligible,Eligible TD resting-state participant (6 runs)
+sub-10876,TD,yes,eligible,Eligible TD resting-state participant (3 runs)
+sub-10883,TD,yes,eligible,Eligible TD resting-state participant (6 runs)
+sub-10918,TD,yes,eligible,Eligible TD resting-state participant (6 runs)
+sub-10959,TD,yes,eligible,Eligible TD resting-state participant (6 runs)
+sub-10970,TD,yes,eligible,Eligible TD resting-state participant (6 runs)
+sub-10990,TD,yes,eligible,Eligible TD resting-state participant (6 runs)
+sub-11025,ASD,yes,eligible,Eligible ASD resting-state participant (2 runs)
+sub-11038,ASD,yes,eligible,Eligible ASD resting-state participant (6 runs)
+sub-11049,ASD,yes,eligible,Eligible ASD resting-state participant (6 runs)
+sub-11053,ASD,yes,eligible,Eligible ASD resting-state participant (5 runs)
+sub-11055,ASD,yes,eligible,Eligible ASD resting-state participant (2 runs)
+sub-11057,ASD,yes,eligible,Eligible ASD resting-state participant (6 runs)
+sub-11062,ASD,yes,eligible,Eligible ASD resting-state participant (7 runs)
+sub-11074,ASD,yes,eligible,Eligible ASD resting-state participant (3 runs)
+sub-11078,ASD,yes,eligible,Eligible ASD resting-state participant (3 runs)
+sub-11141,ASD,no,excluded,Resting-state not completed (no)
+sub-11152,ASD,yes,eligible,Eligible ASD resting-state participant (5 runs)
+sub-11161,ASD,yes,eligible,Eligible ASD resting-state participant (6 runs)
+sub-11173,ASD,no,excluded,Resting-state not completed (no)
+sub-11181,ASD,yes,eligible,Eligible ASD resting-state participant (5 runs)
+sub-11204,ASD,yes,eligible,Eligible ASD resting-state participant (6 runs)
+sub-11215,ASD,yes,eligible,Eligible ASD resting-state participant (3 runs)
+sub-11227,ASD,yes,eligible,Eligible ASD resting-state participant (6 runs)
+sub-11229,ASD,yes,eligible,Eligible ASD resting-state participant (6 runs)
+sub-11235,ASD,yes,eligible,Eligible ASD resting-state participant (6 runs)
+sub-11242,ASD,yes,eligible,Eligible ASD resting-state participant (6 runs)
+sub-11243,ASD,yes,eligible,Eligible ASD resting-state participant (6 runs)
+sub-11244,ASD,yes,eligible,Eligible ASD resting-state participant (2 runs)
+sub-11256,ASD,yes,eligible,Eligible ASD resting-state participant (6 runs)
+sub-11265,ASD,yes,eligible,Eligible ASD resting-state participant (2 runs)
+sub-11274,ASD,yes,eligible,Eligible ASD resting-state participant (6 runs)
+sub-11321,ASD,yes,eligible,Eligible ASD resting-state participant (4 runs)
+sub-11323,ASD,yes,eligible,Eligible ASD resting-state participant (6 runs)
+sub-11325,ASD,yes,eligible,Eligible ASD resting-state participant (6 runs)
+sub-11335,ASD,yes,eligible,Eligible ASD resting-state participant (5 runs)
+sub-11386,ASD,yes,eligible,Eligible ASD resting-state participant (6 runs)
+sub-11391,ASD,yes,eligible,Eligible ASD resting-state participant (6 runs)
+sub-11405,ASD,yes,eligible,Eligible ASD resting-state participant (2 runs)
+sub-11423,ASD,yes,eligible,Eligible ASD resting-state participant (6 runs)
+sub-11426,ASD,no,excluded,Resting-state not completed (no)
+sub-11453,ASD,yes,eligible,Eligible ASD resting-state participant (6 runs)
+sub-11497,ASD,yes,eligible,Eligible ASD resting-state participant (6 runs)
+sub-11510,ASD,yes,eligible,Eligible ASD resting-state participant (6 runs)
+sub-11535,ASD,yes,eligible,Eligible ASD resting-state participant (6 runs)
+sub-11547,ASD,yes,eligible,Eligible ASD resting-state participant (6 runs)
+sub-11548,ASD,yes,eligible,Eligible ASD resting-state participant (6 runs)
+sub-11551,ASD,yes,eligible,Eligible ASD resting-state participant (6 runs)
+sub-11562,ASD,yes,eligible,Eligible ASD resting-state participant (1 runs)
+sub-11576,ASD,yes,eligible,Eligible ASD resting-state participant (3 runs)
+sub-11593,ASD,yes,eligible,Eligible ASD resting-state participant (2 runs)
+sub-11601,ASD,yes,eligible,Eligible ASD resting-state participant (6 runs)
+sub-11613,ASD,yes,eligible,Eligible ASD resting-state participant (6 runs)
+sub-11636,ASD,yes,eligible,Eligible ASD resting-state participant (6 runs)
+sub-11638,ASD,yes,eligible,Eligible ASD resting-state participant (6 runs)
+sub-11674,ASD,yes,eligible,Eligible ASD resting-state participant (3 runs)
+sub-11731,ASD,yes,eligible,Eligible ASD resting-state participant (6 runs)
+sub-11755,ASD,yes,eligible,Eligible ASD resting-state participant (6 runs)
+sub-11759,ASD,yes,eligible,Eligible ASD resting-state participant (1 runs)
+sub-11776,ASD,yes,eligible,Eligible ASD resting-state participant (6 runs)
+sub-11777,ASD,yes,eligible,Eligible ASD resting-state participant (6 runs)
+sub-11791,ASD,yes,eligible,Eligible ASD resting-state participant (6 runs)
+sub-11814,NAN,yes,excluded,Not explicit ASD or TD group (NAN); siblings and unclassified excluded
+sub-11831,ASD,yes,eligible,Eligible ASD resting-state participant (6 runs)
+sub-11847,ASD,yes,eligible,Eligible ASD resting-state participant (6 runs)
+sub-11868,ASD,yes,eligible,Eligible ASD resting-state participant (6 runs)
+sub-11876,ASD,yes,eligible,Eligible ASD resting-state participant (6 runs)
+sub-11883,ASD,yes,eligible,Eligible ASD resting-state participant (2 runs)
+sub-11936,ASD,yes,eligible,Eligible ASD resting-state participant (5 runs)
+sub-11955,ASD,yes,eligible,Eligible ASD resting-state participant (6 runs)
+sub-11976,ASD,yes,eligible,Eligible ASD resting-state participant (6 runs)
+sub-11990,ASD,yes,eligible,Eligible ASD resting-state participant (6 runs)
+sub-11993,ASD,yes,eligible,Eligible ASD resting-state participant (6 runs)
+sub-1501,ASD SIBLING,yes,excluded,Not explicit ASD or TD group (ASD SIBLING); siblings and unclassified excluded
+sub-1502,ASD SIBLING,yes,excluded,Not explicit ASD or TD group (ASD SIBLING); siblings and unclassified excluded
+sub-1507,ASD SIBLING,yes,excluded,Not explicit ASD or TD group (ASD SIBLING); siblings and unclassified excluded
+sub-1513,ASD SIBLING,yes,excluded,Not explicit ASD or TD group (ASD SIBLING); siblings and unclassified excluded
+sub-1514,ASD SIBLING,yes,excluded,Not explicit ASD or TD group (ASD SIBLING); siblings and unclassified excluded
+sub-1522,ASD SIBLING,yes,excluded,Not explicit ASD or TD group (ASD SIBLING); siblings and unclassified excluded
+sub-1526,ASD SIBLING,yes,excluded,Not explicit ASD or TD group (ASD SIBLING); siblings and unclassified excluded
+sub-1528,ASD SIBLING,yes,excluded,Not explicit ASD or TD group (ASD SIBLING); siblings and unclassified excluded
+sub-1530,ASD SIBLING,yes,excluded,Not explicit ASD or TD group (ASD SIBLING); siblings and unclassified excluded
+sub-1536,ASD SIBLING,yes,excluded,Not explicit ASD or TD group (ASD SIBLING); siblings and unclassified excluded
+sub-1537,ASD SIBLING,yes,excluded,Not explicit ASD or TD group (ASD SIBLING); siblings and unclassified excluded
+sub-1546,ASD SIBLING,yes,excluded,Not explicit ASD or TD group (ASD SIBLING); siblings and unclassified excluded
+sub-1551,ASD SIBLING,no,excluded,Not explicit ASD or TD group (ASD SIBLING); siblings and unclassified excluded
+sub-1555,ASD SIBLING,yes,excluded,Not explicit ASD or TD group (ASD SIBLING); siblings and unclassified excluded
+sub-1558,ASD SIBLING,no,excluded,Not explicit ASD or TD group (ASD SIBLING); siblings and unclassified excluded
+sub-1559,ASD SIBLING,yes,excluded,Not explicit ASD or TD group (ASD SIBLING); siblings and unclassified excluded
+sub-1563,ASD SIBLING,yes,excluded,Not explicit ASD or TD group (ASD SIBLING); siblings and unclassified excluded
+sub-1571,ASD SIBLING,yes,excluded,Not explicit ASD or TD group (ASD SIBLING); siblings and unclassified excluded
+sub-1572,ASD SIBLING,yes,excluded,Not explicit ASD or TD group (ASD SIBLING); siblings and unclassified excluded
+sub-1579,ASD SIBLING,yes,excluded,Not explicit ASD or TD group (ASD SIBLING); siblings and unclassified excluded
+sub-1582,ASD SIBLING,yes,excluded,Not explicit ASD or TD group (ASD SIBLING); siblings and unclassified excluded
+sub-1583,ASD SIBLING,yes,excluded,Not explicit ASD or TD group (ASD SIBLING); siblings and unclassified excluded
+sub-1584,ASD SIBLING,yes,excluded,Not explicit ASD or TD group (ASD SIBLING); siblings and unclassified excluded
+sub-1588,ASD SIBLING,yes,excluded,Not explicit ASD or TD group (ASD SIBLING); siblings and unclassified excluded
+sub-1589,ASD SIBLING,yes,excluded,Not explicit ASD or TD group (ASD SIBLING); siblings and unclassified excluded
+sub-1590,ASD SIBLING,yes,excluded,Not explicit ASD or TD group (ASD SIBLING); siblings and unclassified excluded
+sub-1593,ASD SIBLING,yes,excluded,Not explicit ASD or TD group (ASD SIBLING); siblings and unclassified excluded
+sub-1598,ASD SIBLING,yes,excluded,Not explicit ASD or TD group (ASD SIBLING); siblings and unclassified excluded
+sub-2713,ASD,yes,eligible,Eligible ASD resting-state participant (6 runs)

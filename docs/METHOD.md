@@ -1,103 +1,53 @@
-# Verified Method, Dataset Specification, and Scientific Notes
+# Method, Limitations, and Empirical Findings
 
-## Dataset selection and provenance: TUOS (The University of Sheffield)
+## Baseline cohort (TUOS)
 
-The research evaluation freezes **TUOS** as the primary real-data cohort.
-- **Reference Publication:** Dickinson, A., Jeste, S., & Milne, E. (2022), *Electrophysiological signatures of brain aging in autism spectrum disorder*, **Cortex**, 148, 139–151. DOI: [`10.1016/j.cortex.2021.09.022`](https://doi.org/10.1016/j.cortex.2021.09.022).
-- **Archive Package:** Figshare DOI: `10.15131/shef.data.16840351`.
-- **Candidate Assessment:**
-  - **KAU:** Unavailable; missing raw continuous recordings, verified labels, and channel montage.
-  - **OpenNeuro (ds006780, ds005512):** The inspected metadata clones initially contained only Git-Annex pointer stubs (~200 bytes), not binary EEG payloads. This does not establish that recordings are unavailable. The optional SFARI acquisition workflow below retrieves and verifies `ds006780` payloads separately.
-  - **TUOS:** Extracted from Figshare package `16840351`. Contains 56 continuous eyes-closed resting-state EEG recordings (28 autistic adults and 28 neurotypical controls, aged 18–68) recorded with BioSemi ActiveTwo hardware at 512 Hz for ~150–160 seconds.
+- **Dataset:** Continuous resting-state EEG from Dickinson, Jeste, & Milne (2022), *Cortex*, 148, 139–151 (DOI: `10.1016/j.cortex.2021.09.022`; Figshare DOI: `10.15131/shef.data.16840351`).
+- **Eligible participants:** 45 subjects (26 ASD, 19 Control) with standard 10–20 electrode coverage and valid resting recordings.
+- **Excluded participants:** 11 subjects (9 controls on non-standard radial cap without 10–20 calibration; 1 ASD missing Fz; 1 ASD with insufficient clean signal).
+- **Label derivation:** Extracted directly from internal EEGLAB struct comments and setnames (`AA_*` / `ASD*` -> ASD=1; `P*` / `ID*` -> Control=0), not from unverified disk file order.
+- **Scalp nodes:** 4 sensor-level sites: `F7` (Node 0), `Fz` (Node 1), `P1` (Node 2, adjacent to original P3), and `O2` (Node 3).
+- **Edges:** 6 pairwise connections: `(F7, Fz)`, `(F7, P1)`, `(F7, O2)`, `(Fz, P1)`, `(Fz, O2)`, `(P1, O2)`.
+- **Signal conditioning:** Resampled to 128 Hz; common average reference (CAR); 50.0 Hz notch filter ($Q = 30$); 1.0–40.0 Hz zero-phase 4th-order Butterworth bandpass filter.
+- **Duration budget:** 18 clean 8.0-second non-overlapping windows (144.0 seconds total accepted signal per participant), deterministically sampled across each recording.
 
-### Authoritative label provenance and header/filename mismatch resolution
+## 28-dimensional feature representation
 
-Labels were **never** inferred from filename ordering. The original dataset exhibits a known mismatch between sequential file numbering and participant groups:
-1. File `23Abby_Resting.set` contains header `setname: P51` and comments tracing to `Individual Differences Project\EEG Data\P51_3_2-Deci.bdf`. This is a **Control** subject (label = 0), not ASD.
-2. File `29Abby_Resting.set` contains header `setname: ASD29` and comments tracing to `British Academy ASD Project\EEG Data\Raw Data\AA_29_28_6-Deci.bdf`. This is an **ASD** subject (label = 1).
-3. Authoritative labels are extracted directly from the EEGLAB `.set` struct metadata (`setname` and `comments` recording path).
+Extracted identically across all subjects and models:
+1. **Regional band powers (16 features):** Relative power in Delta (1–4 Hz), Theta (4–8 Hz), Alpha (8–13 Hz), and Beta (13–30 Hz) across the 4 nodes (ordered node-major: $0_\delta, 0_\theta, 0_\alpha, 0_\beta, 1_\delta, \dots, 3_\beta$).
+2. **Connectivity medians (6 features):** Median Pearson correlation of Hilbert envelope across accepted windows for each of the 6 edges (ordered: $e_{01}, e_{02}, e_{03}, e_{12}, e_{13}, e_{23}$).
+3. **Connectivity IQRs (6 features):** Interquartile range of Hilbert envelope correlation across accepted windows for each of the 6 edges (ordered identically to medians).
 
-### Cohort eligibility and exclusion criteria
+## Models compared under stratified 5-fold cross-validation
 
-All 56 recordings were evaluated against rigorous inclusion criteria:
-- **Eligible subjects:** 45 participants (**26 ASD, 19 Control**)
-- **Exclusion criteria (11 recordings excluded):**
-  - **Montage mismatch (9 recordings: P1, P5, P6, P9, P20, P24, P25, P29, P31):** Recorded using a 128-pin BioSemi cap labeled with radial pin coordinates (`A1..A32, B1..B32, C1..C32, D1..D32`) rather than standard 10-20 international nomenclature. Excluded per project contract prohibiting uncalibrated BioSemi equivalence guessing. *(Note: Retaining these 9 controls while excluding ASD7 and ASD17 would yield 26 ASD + 28 Control = 54 subjects).*
-  - **Montage channel absence (1 recording: ASD7):** Missing channel `Fz` (channel was excluded during original author preprocessing for signal degradation).
-  - **Quality control amplitude rejection (1 recording: ASD17):** Excessive motion/amplitude artifacts; only 1 clean 8-second window passed the 300 µV peak-to-peak threshold (minimum 3 required).
+1. **RBF-SVM:** Classical Support Vector Classifier with radial basis function kernel on standardized 28 features.
+2. **Amplitude Kernel:** Classical RBF kernel using only the 16 regional band powers.
+3. **Proposed Quantum Kernel:** 4-qubit parameterized quantum circuit:
+   - Initial state: $|+\rangle^{\otimes 4}$ via Hadamard gates.
+   - Node encoding: Single-qubit $R_Z(\theta_i)$ rotations with $\theta_i = \pi \cdot \tilde{x}_i^{\text{band}}$ from normalized band power.
+   - Edge encoding: Two-qubit $ZZ(\gamma_{ij})$ entangling gates with $\gamma_{ij} = \pi \cdot \tilde{w}_{ij}$ from envelope connectivity.
+   - Kernel value: State overlap $|\langle\psi(x)|\psi(x')\rangle|^2$.
+4. **Reassigned Control:** Quantum kernel with edge weights shuffled across non-adjacent node pairs to test topological specificity.
 
-Full eligibility status and exclusion rationales are recorded in `data/metadata/eligibility.csv`. The verified manifest is saved at `data/metadata/recordings.csv`.
+## Empirical findings (TUOS 18-window benchmark, N = 45)
 
-## Verified EEG preprocessing pipeline
+All evaluation metrics are computed out-of-fold under stratified 5-fold cross-validation:
 
-1. **Continuous signal calibration:** Scaled to standard volts ($V$).
-2. **Spatial referencing:** Common average reference (CAR) across all active channels.
-3. **Mains notch filter:** 50.0 Hz IIR notch filter with quality factor $Q = 30$. *(Note on sampling: At target sampling rate 128 Hz, Nyquist is 64 Hz, so 50 Hz does not alias. The notch provides active suppression of European 50 Hz laboratory powerline interference, preventing high-amplitude mains energy from leaking through the 40 Hz filter transition band).*
-4. **Bandpass filtering:** Fourth-order zero-phase Butterworth filter with cutoffs at 1.0 Hz and 40.0 Hz (effective order 8 bidirectional `sosfiltfilt`).
-5. **Resampling:** Rational polyphase resampling from 512.0 Hz to 128.0 Hz.
-6. **Windowing & QC:** Non-overlapping 8.0-second epochs (1024 samples at 128 Hz). Windows are accepted only when:
-   - All channels are finite and non-NaN.
-   - Channel standard deviation exceeds $10^{-12}$ V (flat-line check).
-   - Maximum peak-to-peak amplitude is $\le 300\ \mu\text{V}$.
-7. **Window budget:** `configs/default.yaml` caps each TUOS subject at 18 accepted 8-second windows, selected deterministically using linear index spacing (`np.linspace`) when the pool exceeds the cap. Eighteen windows represent 144.0 seconds of accepted EEG, not necessarily consecutive time. The shared pipeline requires at least three accepted windows per recording; it does not require every subject to reach 18. Check the saved accepted/used-window counts before claiming equal duration across the cohort.
+| Model | Accuracy (95% Wilson CI) | Balanced Accuracy (95% Bootstrap CI) | Macro F1 | Sensitivity | Specificity | Mean Fold AUC (95% Fold Bootstrap CI) |
+| :--- | :---: | :---: | :---: | :---: | :---: | :---: |
+| **RBF-SVM** | 55.56% [41.2%, 69.1%] | 54.45% [42.7%, 66.9%] | 0.545 | 61.54% (16/26) | 47.37% (9/19) | 0.5467 [0.386, 0.709] |
+| **Amplitude Kernel** | 55.56% [41.2%, 69.1%] | 53.74% [39.9%, 66.7%] | 0.537 | 65.38% (17/26) | 42.11% (8/19) | 0.4722 [0.310, 0.647] |
+| **Proposed Quantum Kernel** | 48.89% [35.0%, 63.0%] | 47.98% [35.5%, 60.9%] | 0.480 | 53.85% (14/26) | 42.11% (8/19) | 0.3789 [0.208, 0.550] |
+| **Reassigned Control** | 55.56% [41.2%, 69.1%] | 55.16% [42.0%, 70.0%] | 0.550 | 57.69% (15/26) | 52.63% (10/19) | 0.5833 [0.403, 0.776] |
 
-## Four-node scalp montage (scalp measurement sites)
+### Key scientific observations
 
-The four nodes represent sensor-level **scalp measurement sites** (not direct or source-localized brain regions):
-- **Node 0 (Left frontal site):** `F7` (anterior lateral sensor)
-- **Node 1 (Frontal midline site):** `Fz` (anterior midline sensor)
-- **Node 2 (Left posterior site):** `P1` (centroparietal sensor, 10-10 system)
-- **Node 3 (Right posterior site):** `O2` (occipital sensor)
-
-Pairwise sensor-level connectivity is evaluated across six edges:
-- `(0, 1)`: Left frontal (F7) — Frontal midline (Fz)
-- `(0, 2)`: Left frontal (F7) — Left posterior (P1)
-- `(0, 3)`: Left frontal (F7) — Right posterior (O2)
-- `(1, 2)`: Frontal midline (Fz) — Left posterior (P1)
-- `(1, 3)`: Frontal midline (Fz) — Right posterior (O2)
-- `(2, 3)`: Left posterior (P1) — Right posterior (O2)
-
-## Feature extraction
-
-The extractor is label-free and accepts only processed recordings, a configuration, and the fixed node/edge orders. Labels are not an input. The authoritative order is node-major power, then edge medians, then edge IQRs. For four nodes the width is exactly 28.
-
-Features follow the strict 28-dimensional contract:
-1. **Scalp site band powers (features 1–16):** Welch PSD normalized by 1–30 Hz total power (at most 256 samples per segment). Relative power for each electrode is the integrated PSD in a half-open band divided by the integrated 1-30 Hz PSD. Bands are delta [1,4), theta [4,8), alpha [8,13), and beta [13,30). Per-channel relative powers are averaged within a node, $\log_{10}$ transformed, and then median aggregated across the 18 used windows.
-2. **Connectivity medians (features 17–22):** Continuous filtered signals receive an alpha bandpass followed by the Hilbert transform. Log envelope power is averaged across each node's electrodes. Pearson correlation of those regional log envelopes is computed separately inside each accepted window, never across the whole recording. The fixed edge order is `(0,1), (0,2), (0,3), (1,2), (1,3), (2,3)`. Edge medians across the 18 used windows become features 17–22.
-3. **Connectivity variability (features 23–28):** Interquartile range (IQR, 75th percentile minus 25th percentile) of alpha-envelope correlations across the 18 used windows in the same edge order.
-
-Accepted windows are pooled across a subject's recordings in `recording_id` order. If the pool exceeds `max_windows`, windows are selected at deterministic evenly spaced indices (`np.linspace`). The archive records accepted and used window counts, the subject median and IQR connectivity matrices, and the used-window edge correlations together with their subject and recording identifiers. `feature_schema.json` describes every feature's name, source node or edge, units, and aggregation. The configured feature order must not be changed without rebuilding features and saved model bundles.
-
-Integration validation does not change the scientific feature definitions or settings. Schemas are archive-specific (`feature_schema.json` for the default `subject_features.npz`, otherwise `<archive-stem>.feature_schema.json`). Ordered definitions are checked against the configuration; graph values and window summaries must agree with the feature columns. Optional legacy arrays may be absent, but inconsistent supplied handoff data is rejected before saving or evaluation. These are software-integrity checks, not evidence of clinical validity.
-
-## Quantum and baseline models
-
-Features are standardized on training folds only and bounded by $\phi = \frac{\pi}{2} \tanh(z / 2)$.
-1. **RBF-SVM:** Classical radial basis function kernel on bounded 28-dimensional features.
-2. **Amplitude-fidelity kernel SVM:** Normalized amplitude overlap kernel $(x^T y + 1)^2 / ((\|x\|^2+1)(\|y\|^2+1))$.
-3. **Connectivity-guided quantum-kernel SVM:** Four-qubit PennyLane statevector circuit with node rotations (RY/RZ) and edge-conditioned IsingZZ entangling gates over 2 passes. Fidelity kernel $K(x,y) = |\langle\psi(x)\mid\psi(y)\rangle|^2$.
-4. **Reassigned quantum kernel:** Control experiment with fixed, label-independent permutation of edge assignments.
-
-The map is fixed, not a variationally trained QNN; the learned classifier is an SVM. The four-qubit statevector model is classically tractable and demonstrates neither quantum computational advantage nor clinical validity. Shared references and volume conduction remain limitations of the non-orthogonalized sensor-level connectivity.
-
-## Statistical methodology & evaluation notes
-
-Fixed-setting stratified subject-wise cross-validation is used. Fold count is resolved per run; default is 5. Class balance is preserved in every fold. Preprocessing scalers are fit strictly on training folds and applied to test folds.
-
-Classification metrics are calculated from all out-of-fold labels. AUC is calculated within each fold and averaged. The evaluation module freezes subject-fold assignments once per run and recomputes all classification and AUC summaries through the shared `summarize_oof` function. AUC summaries include the mean, population standard deviation (`ddof=0`), and number of defined folds; standard deviation is descriptive fold-to-fold spread, not a confidence interval. Single-class fold AUC is undefined and omitted from its summary. OOF validation rejects duplicates, differing model cohorts/partitions, conflicting labels, nonfinite scores, and invalid fold IDs. Split creation never truncates fractional labels into diagnosis classes. Source-commit provenance is tied to the installed source checkout, not the caller's current directory.
-
-The statistics below are Sahil's reported TUOS results, with run/configuration identifiers in [README_SAHIL.md](../README_SAHIL.md). This merge verifies software integration, not those recorded-data results or the separate bootstrap calculations; their underlying local artifacts must be checked before submission. No hyperparameter search, external validation, or clinical validation is supplied by this integration. Changing settings after inspecting held-out scores requires a separately identified exploratory run.
-
-1. **Confidence intervals:** Wilson score intervals apply specifically to the unweighted overall accuracy proportion ($k / N$). They do not apply to balanced accuracy or ROC-AUC.
-2. **Fold-preserving stratified bootstrap (2,000 resamples):**
-   - Uncalibrated SVM decision margins from distinct folds cannot be pooled into a single global ranking without risking scale distortions.
-   - To estimate sampling uncertainty without pooling, the bootstrap resamples ASD and Control participants independently within each fold.
-   - For every iteration, fold AUC is computed within each of the 5 test folds and averaged to yield the resampled Mean Fold AUC.
-   - Results on the 18-window configuration:
-     - **RBF-SVM:** Mean Fold AUC = 0.5467 (95% CI: [0.386, 0.709]); Balanced Acc = 0.5445 (95% CI: [0.427, 0.669])
-     - **Amplitude Kernel:** Mean Fold AUC = 0.4722 (95% CI: [0.310, 0.647]); Balanced Acc = 0.5374 (95% CI: [0.399, 0.667])
-     - **Proposed Quantum Kernel:** Mean Fold AUC = 0.3789 (95% CI: [0.208, 0.550]); Balanced Acc = 0.4798 (95% CI: [0.355, 0.609])
-     - **Reassigned Control:** Mean Fold AUC = 0.5833 (95% CI: [0.403, 0.776]); Balanced Acc = 0.5516 (95% CI: [0.420, 0.700])
+1. **No quantum advantage:** The proposed quantum kernel achieves 48.89% accuracy and 47.98% balanced accuracy, performing near chance level ($50\%$) and below the classical RBF-SVM (55.56% accuracy, 54.45% balanced accuracy).
+2. **Confidence intervals span chance:** All 95% bootstrap confidence intervals for balanced accuracy and fold-level AUC cross the 0.50 chance threshold:
+   - **Quantum Kernel:** Mean Fold AUC = 0.3789 (95% CI: [0.208, 0.550]); Balanced Acc = 0.4798 (95% CI: [0.355, 0.609])
+   - **RBF-SVM:** Mean Fold AUC = 0.5467 (95% CI: [0.386, 0.709]); Balanced Acc = 0.5445 (95% CI: [0.427, 0.669])
+   - **Amplitude Kernel:** Mean Fold AUC = 0.4722 (95% CI: [0.310, 0.647]); Balanced Acc = 0.5374 (95% CI: [0.399, 0.667])
+   - **Reassigned Control:** Mean Fold AUC = 0.5833 (95% CI: [0.403, 0.776]); Balanced Acc = 0.5516 (95% CI: [0.420, 0.700])
 3. **Paired classification differences:** McNemar's exact test on out-of-fold contingency tables shows no statistically significant classification differences between any pair of models ($p \ge 0.6476$).
 4. **Sensor-level limitation:** Sensor-level alpha envelope correlation reflects functional statistical coupling between scalp measurement sites, but is subject to volume conduction and common reference effects. It must not be interpreted as anatomical or causal connectivity.
 5. **Class balance:** With 26 ASD and 19 Control subjects, the majority-class baseline is $26/45 = 57.78\%$.
@@ -119,6 +69,21 @@ Activate a dataset-specific ignored local profile with separate feature/results 
 ## Integration decision
 
 The integration of PRs #4 and #5 retains Sahil's TUOS defaults and manifest as primary and Tushar's SFARI configuration/workspace tools as optional, as explicitly approved for this merge. The workspace regression test now checks both distinct node maps, mains frequencies, window caps, and configuration IDs while requiring identical remaining preprocessing/model settings and the shared 28-feature/edge-order convention. No feature algorithm, label mapping, fold generation, dependency, or model-reference ordering is changed by the conflict resolution. Rebuild features and bundles whenever the selected dataset or configuration changes; never combine synthetic software checks with recorded-data results.
+
+## Cross-dataset replication: SFARI (ds006780, v1.0.0)
+
+To test generalizability across independent clinical cohorts and recording hardware, the pipeline was replicated on **SFARI** (OpenNeuro `ds006780`, snapshot 1.0.0, DOI: [`10.18112/openneuro.ds006780.v1.0.0`](https://doi.org/10.18112/openneuro.ds006780.v1.0.0)).
+- **Cohort Audit:** 136 total subjects audited. 33 subjects excluded (28 siblings per protocol, 4 incomplete resting state, 1 missing group).
+- **Candidate Pool:** 103 subjects (63 ASD, 40 TD) across 517 resting-state BDF runs.
+- **Fixed-QC Screening:** 3 subjects excluded for pervasive motion/amplitude artifacts across all runs (`sub-11025`, `sub-11562`, `sub-11936`).
+- **Screened Eligible Cohort:** Exactly **100 participants (60 ASD, 40 Control)** across 438 clean resting-state runs.
+- **Preprocessing Adaptation:** 60.0 Hz notch filter (US powerline interference), 1.0–40.0 Hz bandpass, CAR reference, 128 Hz resampling, classical four-node montage (`F3, F4, P3, P4`, verified in BioSemi 64-channel array).
+- **5-Fold Cross-Validation Results (100 Subjects):**
+  - **RBF-SVM:** Accuracy = 50.0%, Balanced Acc = 48.73% (95% CI: [0.383, 0.592]), Mean Fold AUC = 0.4758 (95% CI: [0.352, 0.590])
+  - **Amplitude Kernel:** Accuracy = 45.0%, Balanced Acc = 44.53% (95% CI: [0.346, 0.542]), Mean Fold AUC = 0.4157 (95% CI: [0.298, 0.531])
+  - **Proposed Quantum Kernel:** Accuracy = 44.0%, Balanced Acc = 40.33% (95% CI: [0.317, 0.488]), Mean Fold AUC = 0.3687 (95% CI: [0.258, 0.485])
+  - **Reassigned Control:** Accuracy = 45.0%, Balanced Acc = 41.78% (95% CI: [0.325, 0.512]), Mean Fold AUC = 0.3467 (95% CI: [0.229, 0.473])
+- **Statistical Significance:** McNemar exact tests show no significant classification differences between any pair of models ($p \ge 0.3323$), replicating our TUOS finding that connectivity-guided quantum kernels do not provide an empirical advantage over classical RBF baselines on resting-state scalp EEG.
 
 ## Explanation
 

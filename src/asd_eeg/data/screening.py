@@ -14,11 +14,18 @@ from asd_eeg.data.manifest import read_manifest
 from asd_eeg.preprocessing.pipeline import preprocess_recording
 
 
+def _safe_relpath(path: str | Path, start: Path) -> str:
+    try:
+        return Path(os.path.relpath(path, start)).as_posix()
+    except ValueError:
+        return Path(path).as_posix()
+
+
 def screen_manifest(manifest: str | Path, config: Config, output: str | Path) -> dict:
     table = read_manifest(manifest)
     run = Path(output).resolve() / (
         datetime.now(timezone.utc).strftime("screen-%Y%m%dT%H%M%SZ-") + uuid4().hex[:8])
-    run.mkdir(parents=True)
+    run.mkdir(parents=True, exist_ok=True)
     audit, accepted = [], []
     for _, row in table.iterrows():
         record = {"subject_id": row.subject_id, "recording_id": row.recording_id}
@@ -32,8 +39,7 @@ def screen_manifest(manifest: str | Path, config: Config, output: str | Path) ->
     included = pd.DataFrame(accepted, columns=table.columns)
     excluded_subjects = sorted(set(table.subject_id) - set(included.subject_id))
     eligible_path = run / "recordings.csv"
-    included["eeg_path"] = [Path(os.path.relpath(path, run)).as_posix()
-                            for path in included.eeg_path]
+    included["eeg_path"] = [_safe_relpath(path, run) for path in included.eeg_path]
     included.to_csv(eligible_path, index=False)
     (run / "recording_qc.json").write_text(json.dumps(audit, indent=2), encoding="utf-8")
     pd.DataFrame([{k: v for k, v in row.items() if k != "quality"} for row in audit]).to_csv(
