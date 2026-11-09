@@ -12,9 +12,16 @@ Non-overlapping eight-second windows are accepted when all channels are finite, 
 
 ## Features
 
-Welch PSD uses at most 256 samples per segment. Band power is integrated within half-open delta [1,4), theta [4,8), alpha [8,13), and beta [13,30) bands and normalized by integrated 1-30 Hz power. Per-channel relative powers are averaged within a node, log10 transformed, then median aggregated across windows.
+The extractor is label-free and accepts only processed recordings, a configuration, and the fixed node/edge orders. Labels are not an input. The authoritative order is node-major power, then edge medians, then edge IQRs. For four nodes the width is exactly 28.
 
-For connectivity, continuous filtered signals receive an alpha bandpass followed by the Hilbert transform. Log-envelope power is averaged across each node's electrodes. Pearson correlation of those regional log envelopes is computed per accepted window. Edge medians and IQRs become the remaining features. This is sensor-level statistical connectivity, not source-localized or causal connectivity. It is not orthogonalized; shared references and volume conduction remain limitations. Window summaries preserve variability but not full temporal order.
+Welch PSD uses at most 256 samples per segment. Relative power for each electrode is the integrated PSD in a half-open band divided by the integrated 1-30 Hz PSD. Bands are delta [1,4), theta [4,8), alpha [8,13), and beta [13,30). Electrode relative powers are averaged within a node, log10 transformed, and then median aggregated across used windows.
+
+For connectivity, continuous filtered signals receive an alpha bandpass followed by the Hilbert transform. Log envelope power is averaged across each node's electrodes. Pearson correlation of those regional log envelopes is computed separately inside each accepted window, never across the whole recording. The fixed edge order is `(0,1), (0,2), (0,3), (1,2), (1,3), (2,3)`. Edge medians and the 75th-minus-25th percentile IQRs become the final 12 features. This is sensor-level statistical connectivity, not source-localized or causal connectivity. It is not orthogonalized; shared references and volume conduction remain limitations. Window summaries preserve variability but not full temporal order.
+
+Accepted windows are pooled across a subject's recordings in `recording_id` order. If the pool exceeds `max_windows`, windows are selected at deterministic evenly spaced indices. Powers use the median across used windows. The archive records accepted and used window counts, the subject median and IQR connectivity matrices, and the used-window edge correlations together with their subject and recording identifiers. `feature_schema.json` describes every feature's name, source node or edge, units, and aggregation. The configured feature order must not be changed without rebuilding features and saved model bundles.
+
+Integration validation does not change the scientific feature definitions or settings. Schemas are archive-specific (`feature_schema.json` for the default `subject_features.npz`, otherwise `<archive-stem>.feature_schema.json`). Ordered definitions are checked against the configuration; graph values and window summaries must agree with the feature columns. Optional legacy arrays may be absent, but inconsistent supplied handoff data is rejected before saving or evaluation. These are software-integrity checks, not evidence of clinical validity.
+
 
 ## Quantum map
 
