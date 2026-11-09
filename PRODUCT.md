@@ -30,4 +30,4 @@ No marketing landing page, dark neon quantum styling, animated decoration, inven
 
 ## Accessibility & Inclusion
 
-Use labelled native controls, keyboard navigation, readable contrast, responsive layouts, and text alongside status colors. No motion is needed for this workspace.
+The target is laptop use. Focus future layout, interaction, and testing work on laptop screens. Use labelled native controls, keyboard navigation, readable contrast, and text alongside status colors. No motion is needed for this workspace.

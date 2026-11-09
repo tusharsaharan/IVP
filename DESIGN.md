@@ -8,6 +8,8 @@ Students and an evaluator use a laptop in a normally lit classroom, checking rec
 
 Clean academic research workspace, confirmed by the user. Restrained color: warm off-white canvas, slightly darker neutral sidebar, dark ink, and muted blue for selected controls and primary actions.
 
+Target laptop viewports, particularly 1366x768 and 1440x900. Future layout and interaction testing should focus on laptops; mobile optimization is outside the requested scope.
+
 ## Tokens
 
 - Canvas: `#f8f9f7` / `oklch(0.98 0.003 120)`.
