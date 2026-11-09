@@ -16,6 +16,8 @@
 
 The reader checks paths and conflicting metadata. It cannot establish whether supplied diagnoses are authoritative. Sahil verifies provenance before adding rows. SET/FDT pairs remain together. OpenNeuro annex pointers must be replaced by recording payloads.
 
+For SFARI, `prepare-sfari` requires the `ds006780` v1.0.0 metadata snapshot, maps only explicit `TD` to 0 and `ASD` to 1, and selects all resting-state BDF runs for participants whose resting availability is `yes`. It verifies annex byte counts and SHA-256 hashes before publishing `candidates.csv`. Source metadata, download status, and eligibility exclusions stay beside the ignored local recordings. `screen` applies the shared fixed preprocessor without using labels, saves every recording's inclusion/error reason, and writes a new eligible manifest plus a cohort/configuration summary before evaluation. Participants with no surviving recordings are explicitly listed, never silently removed.
+
 ## Module boundaries
 
 ```python
@@ -31,6 +33,8 @@ analyze_subject(manifest_path, subject_id, bundle_path) -> prediction dict
 ```
 
 `EEGRecording.data` is `[channels, samples]` in **volts**. NPZ input requires `data`, scalar `sfreq`, and a string array `channels`. Object arrays are unsupported. MNE readers calibrate to volts. Loaders exclude channels marked bad in MNE metadata.
+
+When a BIDS `_channels.tsv` accompanies an `_eeg` recording, its ordered names must exactly match the header. Explicit EEG/EOG/ECG/EMG/TRIG/MISC types and good/bad status override reader defaults. No electrode renaming or equivalence guessing occurs. Only retained EEG channels enter average reference, QC, and features; SFARI external EXG channels are labelled EMG and its Status channel is a trigger.
 
 Preprocessing returns continuous filtered data and accepted, non-overlapping window starts. It does not apply population-fitted normalization. All sessions supplied to feature extraction must belong to one subject and dataset.
 

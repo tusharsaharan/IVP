@@ -2,7 +2,17 @@
 
 ## Status
 
-This is a working starting implementation for the team to validate and extend. The default electrode mapping and preprocessing settings are configurable hypotheses, not verified KAU or TUOS specifications. No real-cohort result is distributed with the repository.
+This is a working research implementation for the team to validate and extend. The selected cohort is SFARI resting-state EEG (`ds006780` v1.0.0); KAU is not part of the experiment. Generic defaults remain configurable hypotheses for other datasets. No raw cohort or generated performance result is distributed with the repository.
+
+## Selected recorded-data protocol
+
+Use the SFARI snapshot DOI `10.18112/openneuro.ds006780.v1.0.0`. Eligibility comes from `participants.tsv` diagnostic group and resting-state availability, with group definitions and diagnostic provenance in `participants.json` and README. Only explicit ASD and TD groups enter the primary comparison, mapped to ASD=1 and Control=0. Sibling and unknown-group entries are excluded, not treated as TD. Do not infer diagnosis from a filename or questionnaire score. The local metadata initially identifies 103 candidate participants (63 ASD, 40 TD) and 528 resting-state BDF runs; these are pre-QC counts, not final sample sizes.
+
+Acquire all listed resting-state BDF runs, not other task paradigms, into a separate ignored directory. Validate each annex SHA-256 and byte count and retain a metadata-hash/provenance record. The supplied metadata describes continuous BioSemi 64-channel EEG sampled at 512 Hz, 60 Hz mains, and directly named F3/F4/P3/P4. `configs/sfari_rest.yaml` freezes the existing node order, 28-feature definition, model settings, and window rules, changing only the generic 50 Hz mains setting to the verified 60 Hz. MNE calibrates BDF to volts. Apply BIDS channel types before retaining EEG, so the eight EXG channels (EMG) and Status trigger do not contaminate average reference or QC. Bad-channel metadata is honored; missing required nodes fail rather than being substituted.
+
+Screen each recording with the shared preprocessor before evaluating any model. Keep all runs meeting the fixed minimum of three eight-second clean windows per recording; publish exact exclusions and list participants with no surviving recording. Pool remaining runs only within their original participant ID and cap at the existing 20 evenly spaced accepted windows per participant. Do not relax QC, select a task, or select a subset based on test scores. This is basic fixed-rule QC, not ICA or a clinical artifact-removal protocol. Unequal available duration, age/sex differences, reference effects, prior hardware filtering, and any differential QC attrition remain limitations to report. The SFARI README describes eyes-open rest; this is not a replication of the source paper's private cohort or acquisition protocol. Cross-dataset validity and clinical diagnosis are not demonstrated.
+
+The local CLI/application profile selects the screened manifest and dataset-specific configuration without changing generic defaults or tracked manifest headers. Active evaluation checks archive/cohort/configuration compatibility. These integration changes do not alter fold generation, training-only transformations, quantum settings, or bundle schema. Sahil and Vivek should review the data/QC handoff before submission; the cohort decision is frozen before performance is inspected.
 
 ## EEG pipeline
 
