@@ -174,27 +174,59 @@ To verify scientific generalizability across independent clinical populations an
 
 ## 5. Verification & Reproduction Commands
 
-To reproduce Sahil's entire pipeline from a terminal:
+### A. Primary Dataset: TUOS Cohort (45 Subjects)
 
 ```powershell
 # 1. Switch to Sahil's branch
 git checkout sahil
 
-# 2. Run unit and integration tests (14 tests)
-python -m pytest
+# 2. Run unit and integration tests (196 tests passing)
+uv run pytest
 
 # 3. Run linter
-python -m ruff check .
+uv run ruff check .
 
-# 4. Validate the 45-subject manifest
-neuroq validate --manifest data/metadata/recordings.csv
+# 4. Validate the 45-subject TUOS manifest
+uv run python -m asd_eeg.cli validate --manifest data/metadata/recordings.csv
 
 # 5. Extract 28-dimensional features (18-window common budget)
-neuroq features --manifest data/metadata/recordings.csv --config configs/default.yaml --output artifacts/features.npz
+uv run python -m asd_eeg.cli features --manifest data/metadata/recordings.csv --config configs/default.yaml --output artifacts/features.npz
 
-# 6. Run 5-fold stratified evaluation across all 4 models
-neuroq evaluate --features artifacts/features.npz --output results
+# 6. Run 5-fold stratified cross-validation across all 4 models
+uv run python -m asd_eeg.cli evaluate --features artifacts/features.npz --output results
 
 # 7. Predict on held-out subject ASD11 using a saved quantum bundle
-neuroq predict --manifest data/metadata/recordings.csv --subject ASD11 --bundle results/run-20261109-160931-0cf4a1/fold_0/quantum.joblib --output artifacts/prediction.json
+uv run python -m asd_eeg.cli predict --manifest data/metadata/recordings.csv --subject ASD11 --bundle results/run-20261109-160931-0cf4a1/fold_0/quantum.joblib --output artifacts/prediction.json
 ```
+
+---
+
+### B. Replication Dataset: SFARI Cohort (100 Subjects)
+
+```powershell
+# 1. Validate the screened SFARI manifest (438 runs across 100 subjects)
+uv run python -m asd_eeg.cli validate --manifest data/metadata/sfari_recordings.csv
+
+# 2. (Optional) Re-run label-independent screening on candidate BDF runs
+uv run python -m asd_eeg.cli screen --manifest data/metadata/sfari_recordings.csv --config configs/sfari.yaml --output data/local/screening
+
+# 3. Extract 28-dimensional features for the 100 SFARI subjects
+uv run python -m asd_eeg.cli features --manifest data/metadata/sfari_recordings.csv --config configs/sfari.yaml --output artifacts/sfari_features.npz
+
+# 4. Run 5-fold stratified cross-validation on SFARI
+uv run python -m asd_eeg.cli evaluate --features artifacts/sfari_features.npz --output results/sfari
+
+# 5. Inspect SFARI evaluation metrics
+cat results/sfari/run-*/metrics.json
+```
+
+---
+
+### C. Launching the Interactive Streamlit Application
+
+```powershell
+# Launch the dashboard (laptop screen optimized)
+uv run streamlit run app/main.py
+```
+* **To inspect TUOS:** Default view loads `data/metadata/recordings.csv` and `artifacts/features.npz`.
+* **To inspect SFARI:** Switch profile to `data/metadata/sfari_recordings.csv` and `artifacts/sfari_features.npz` in the dataset selection tab.
