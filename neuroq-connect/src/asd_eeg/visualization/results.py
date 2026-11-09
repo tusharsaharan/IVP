@@ -19,23 +19,22 @@ IMPORTANT: SVM decision scores are NOT probabilities.
 from __future__ import annotations
 
 import logging
+from collections.abc import Sequence
 from pathlib import Path
-from typing import Any, Sequence
+from typing import Any
 
 import matplotlib.pyplot as plt
 import numpy as np
 import seaborn as sns
-from sklearn.metrics import ConfusionMatrixDisplay, RocCurveDisplay, roc_curve, auc
+from sklearn.metrics import ConfusionMatrixDisplay, RocCurveDisplay, auc, roc_curve
 
 from asd_eeg.visualization.common import (
+    DEFAULT_FIGSIZE,
+    PUBLICATION_DPI,
     apply_publication_style,
+    get_color_palette,
     save_figure,
     validate_array,
-    get_color_palette,
-    ASD_COLOR,
-    TD_COLOR,
-    PUBLICATION_DPI,
-    DEFAULT_FIGSIZE,
 )
 
 logger = logging.getLogger(__name__)
@@ -209,7 +208,7 @@ def plot_confusion_matrix(
     cfg_figsize = figsize or (5, 4)
     fig, ax = plt.subplots(figsize=cfg_figsize)
 
-    disp = ConfusionMatrixDisplay.from_predictions(
+    ConfusionMatrixDisplay.from_predictions(
         y_true, y_pred,
         display_labels=_class_names,
         normalize=normalize,

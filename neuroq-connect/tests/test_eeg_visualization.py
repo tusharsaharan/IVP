@@ -2,13 +2,13 @@
 
 from __future__ import annotations
 
+import matplotlib
 import numpy as np
 import pytest
-import matplotlib
+
 matplotlib.use("Agg")  # headless backend for CI
 
 from asd_eeg.visualization import eeg as eeg_module
-
 
 # ---------------------------------------------------------------------------
 # Fixtures

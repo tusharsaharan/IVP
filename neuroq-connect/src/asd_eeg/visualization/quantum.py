@@ -31,16 +31,17 @@ from __future__ import annotations
 
 import logging
 import warnings
+from collections.abc import Callable, Sequence
 from pathlib import Path
-from typing import Any, Callable, Sequence
+from typing import Any
 
 import matplotlib.pyplot as plt
 import numpy as np
 
 from asd_eeg.visualization.common import (
+    PUBLICATION_DPI,
     apply_publication_style,
     save_figure,
-    PUBLICATION_DPI,
 )
 
 logger = logging.getLogger(__name__)
@@ -69,7 +70,7 @@ def _try_pennylane_draw(
     try:
         fig, _ = qml.draw_mpl(circuit_fn)(sample_input)
         return fig
-    except Exception as exc:
+    except Exception as exc:  # noqa: BLE001
         logger.warning("qml.draw_mpl failed: %s", exc)
         return None
 
@@ -250,7 +251,9 @@ def visualize_kernel_circuit_pair(
         if inner is not None:
             # Transfer the inner figure's axes content into ax_circ
             inner.canvas.draw()
-            import io, PIL.Image  # noqa: E401
+            import io
+
+            import PIL.Image
             buf = io.BytesIO()
             inner.savefig(buf, format="png", dpi=150)
             buf.seek(0)

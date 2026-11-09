@@ -18,20 +18,21 @@ Validation rules:
 from __future__ import annotations
 
 import logging
+from collections.abc import Sequence
 from pathlib import Path
-from typing import Any, Sequence
+from typing import Any
 
 import matplotlib.pyplot as plt
 import numpy as np
 import seaborn as sns
 
 from asd_eeg.visualization.common import (
+    CMAP_KERNEL,
+    DEFAULT_FIGSIZE,
+    PUBLICATION_DPI,
     apply_publication_style,
     save_figure,
     validate_array,
-    CMAP_KERNEL,
-    PUBLICATION_DPI,
-    DEFAULT_FIGSIZE,
 )
 
 logger = logging.getLogger(__name__)
@@ -62,14 +63,13 @@ def _validate_kernel_matrix(
             f"got shape {mat.shape}."
         )
 
-    if check_symmetric:
-        if not np.allclose(mat, mat.T, atol=sym_tol):
-            logger.warning(
-                "'%s' is not symmetric (max asymmetry = %.2e). "
-                "This may indicate a numerical issue.",
-                name,
-                float(np.max(np.abs(mat - mat.T))),
-            )
+    if check_symmetric and not np.allclose(mat, mat.T, atol=sym_tol):
+        logger.warning(
+            "'%s' is not symmetric (max asymmetry = %.2e). "
+            "This may indicate a numerical issue.",
+            name,
+            float(np.max(np.abs(mat - mat.T))),
+        )
 
     if check_unit_diag:
         diag_max_dev = float(np.max(np.abs(np.diag(mat) - 1.0)))

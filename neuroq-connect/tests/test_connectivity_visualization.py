@@ -2,14 +2,14 @@
 
 from __future__ import annotations
 
+import matplotlib
 import numpy as np
 import pytest
-import matplotlib
+
 matplotlib.use("Agg")
 
 from asd_eeg.visualization import connectivity as conn_module
-from asd_eeg.visualization.connectivity import EDGES, N_NODES, N_EDGES
-
+from asd_eeg.visualization.connectivity import EDGES, N_EDGES, N_NODES
 
 # ---------------------------------------------------------------------------
 # Fixtures

@@ -7,4 +7,4 @@ for EEG-based autism classification.
 """
 
 __version__ = "0.1.0"
-__all__ = ["visualization", "explainability"]
+__all__ = ["explainability", "visualization"]

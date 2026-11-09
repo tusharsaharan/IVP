@@ -1,4 +1,3 @@
-#!/usr/bin/env python3
 """
 generate_test_figures.py — Illustrative example figure generation.
 
@@ -28,25 +27,25 @@ PROJECT_ROOT = Path(__file__).resolve().parent.parent
 if str(PROJECT_ROOT / "src") not in sys.path:
     sys.path.insert(0, str(PROJECT_ROOT / "src"))
 
-import numpy as np
-import pandas as pd
 import matplotlib
+import numpy as np
+
 matplotlib.use("Agg")  # Headless — no display required
 
-from asd_eeg.visualization.common import load_config, apply_publication_style
-from asd_eeg.visualization import eeg as eeg_mod
-from asd_eeg.visualization import connectivity as conn_mod
-from asd_eeg.visualization import quantum as quantum_mod
-from asd_eeg.visualization import kernels as kern_mod
-from asd_eeg.visualization import results as res_mod
 from asd_eeg.explainability.perturbation import (
     compute_training_references,
-    run_perturbation_analysis,
-    run_batch_perturbation,
-    save_perturbation_results,
-    plot_perturbation_sensitivity,
     plot_case_study,
+    plot_perturbation_sensitivity,
+    run_batch_perturbation,
+    run_perturbation_analysis,
+    save_perturbation_results,
 )
+from asd_eeg.visualization import connectivity as conn_mod
+from asd_eeg.visualization import eeg as eeg_mod
+from asd_eeg.visualization import kernels as kern_mod
+from asd_eeg.visualization import quantum as quantum_mod
+from asd_eeg.visualization import results as res_mod
+from asd_eeg.visualization.common import apply_publication_style, load_config
 
 # ---------------------------------------------------------------------------
 # Paths
@@ -131,7 +130,7 @@ def demo_eeg():
         filename_stem="example_eeg_traces",
         formats=FORMATS,
     )
-    print(f"  Saved: example_eeg_traces.[png,pdf]")
+    print("  Saved: example_eeg_traces.[png,pdf]")
 
     eeg_mod.plot_selected_channels(
         eeg_data,
@@ -142,7 +141,7 @@ def demo_eeg():
         filename_stem="example_eeg_selected",
         formats=FORMATS,
     )
-    print(f"  Saved: example_eeg_selected.[png,pdf]")
+    print("  Saved: example_eeg_selected.[png,pdf]")
 
     eeg_mod.plot_eeg_time_window(
         eeg_data,
@@ -155,7 +154,7 @@ def demo_eeg():
         filename_stem="example_eeg_window",
         formats=FORMATS,
     )
-    print(f"  Saved: example_eeg_window.[png,pdf]")
+    print("  Saved: example_eeg_window.[png,pdf]")
 
 
 # ---------------------------------------------------------------------------
@@ -175,7 +174,7 @@ def demo_connectivity():
         filename_stem="example_connectivity_graph",
         formats=FORMATS,
     )
-    print(f"  Saved: example_connectivity_graph.[png,pdf]")
+    print("  Saved: example_connectivity_graph.[png,pdf]")
 
     # Build 4x4 matrix from edge weights
     import networkx as nx
@@ -195,7 +194,7 @@ def demo_connectivity():
         filename_stem="example_connectivity_matrix",
         formats=FORMATS,
     )
-    print(f"  Saved: example_connectivity_matrix.[png,pdf]")
+    print("  Saved: example_connectivity_matrix.[png,pdf]")
 
     conn_mod.plot_edge_weights_bar(
         edge_weights,
@@ -205,7 +204,7 @@ def demo_connectivity():
         filename_stem="example_edge_weights_bar",
         formats=FORMATS,
     )
-    print(f"  Saved: example_edge_weights_bar.[png,pdf]")
+    print("  Saved: example_edge_weights_bar.[png,pdf]")
 
 
 # ---------------------------------------------------------------------------
@@ -221,7 +220,7 @@ def demo_quantum():
         filename_stem="example_quantum_circuit_placeholder",
         formats=FORMATS,
     )
-    print(f"  Saved: example_quantum_circuit_placeholder.[png,pdf]")
+    print("  Saved: example_quantum_circuit_placeholder.[png,pdf]")
     print("  NOTE: This is a PLACEHOLDER. Replace circuit_fn with Vivek's QNode.")
 
 
@@ -246,7 +245,7 @@ def demo_kernels():
         filename_stem="example_kernel_rbf",
         formats=FORMATS,
     )
-    print(f"  Saved: example_kernel_rbf.[png,pdf]")
+    print("  Saved: example_kernel_rbf.[png,pdf]")
 
     kern_mod.plot_kernel_matrix(
         K_qk,
@@ -256,7 +255,7 @@ def demo_kernels():
         filename_stem="example_kernel_quantum",
         formats=FORMATS,
     )
-    print(f"  Saved: example_kernel_quantum.[png,pdf]")
+    print("  Saved: example_kernel_quantum.[png,pdf]")
 
     kern_mod.plot_kernel_comparison(
         {"RBF (Synthetic)": K_rbf, "Quantum (Synthetic)": K_qk},
@@ -265,7 +264,7 @@ def demo_kernels():
         filename_stem="example_kernel_comparison",
         formats=FORMATS,
     )
-    print(f"  Saved: example_kernel_comparison.[png,pdf]")
+    print("  Saved: example_kernel_comparison.[png,pdf]")
 
     kern_mod.plot_kernel_distribution(
         {"RBF (Synthetic)": K_rbf, "Quantum (Synthetic)": K_qk},
@@ -274,7 +273,7 @@ def demo_kernels():
         filename_stem="example_kernel_distribution",
         formats=FORMATS,
     )
-    print(f"  Saved: example_kernel_distribution.[png,pdf]")
+    print("  Saved: example_kernel_distribution.[png,pdf]")
 
     kern_mod.plot_train_test_kernel(
         K_rbf, K_test,
@@ -282,7 +281,7 @@ def demo_kernels():
         filename_stem="example_kernel_train_test",
         formats=FORMATS,
     )
-    print(f"  Saved: example_kernel_train_test.[png,pdf]")
+    print("  Saved: example_kernel_train_test.[png,pdf]")
 
 
 # ---------------------------------------------------------------------------
@@ -327,7 +326,7 @@ def demo_results():
         filename_stem="example_model_comparison",
         formats=FORMATS,
     )
-    print(f"  Saved: example_model_comparison.[png,pdf]")
+    print("  Saved: example_model_comparison.[png,pdf]")
 
     res_mod.plot_metric_heatmap(
         model_metrics,
@@ -336,7 +335,7 @@ def demo_results():
         filename_stem="example_metric_heatmap",
         formats=FORMATS,
     )
-    print(f"  Saved: example_metric_heatmap.[png,pdf]")
+    print("  Saved: example_metric_heatmap.[png,pdf]")
 
     # Synthetic labels and decision scores
     n = 30
@@ -351,7 +350,7 @@ def demo_results():
         filename_stem="example_confusion_matrix",
         formats=FORMATS,
     )
-    print(f"  Saved: example_confusion_matrix.[png,pdf]")
+    print("  Saved: example_confusion_matrix.[png,pdf]")
 
     res_mod.plot_roc_curve(
         y_true, scores,
@@ -360,7 +359,7 @@ def demo_results():
         filename_stem="example_roc_curve",
         formats=FORMATS,
     )
-    print(f"  Saved: example_roc_curve.[png,pdf]")
+    print("  Saved: example_roc_curve.[png,pdf]")
 
     fold_metrics = [
         {"accuracy": float(RNG.uniform(0.60, 0.85))} for _ in range(5)
@@ -372,7 +371,7 @@ def demo_results():
         filename_stem="example_fold_performance",
         formats=FORMATS,
     )
-    print(f"  Saved: example_fold_performance.[png,pdf]")
+    print("  Saved: example_fold_performance.[png,pdf]")
 
     roc_data = {
         "RBF-SVM (Syn)": (y_true, RNG.standard_normal(n)),
@@ -384,7 +383,7 @@ def demo_results():
         filename_stem="example_roc_comparison",
         formats=FORMATS,
     )
-    print(f"  Saved: example_roc_comparison.[png,pdf]")
+    print("  Saved: example_roc_comparison.[png,pdf]")
 
 
 # ---------------------------------------------------------------------------
@@ -418,7 +417,7 @@ def demo_perturbation():
         filename_stem="example_perturbation_sensitivity",
         formats=FORMATS,
     )
-    print(f"  Saved: example_perturbation_sensitivity.[png,pdf]")
+    print("  Saved: example_perturbation_sensitivity.[png,pdf]")
 
     # Save structured results
     paths = save_perturbation_results(
@@ -443,7 +442,7 @@ def demo_perturbation():
         filename_stem="example_perturbation_batch",
         formats=FORMATS,
     )
-    print(f"  Saved: example_perturbation_batch.[png,pdf]")
+    print("  Saved: example_perturbation_batch.[png,pdf]")
 
 
 # ---------------------------------------------------------------------------

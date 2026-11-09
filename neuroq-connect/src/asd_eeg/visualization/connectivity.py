@@ -12,23 +12,22 @@ explicit node labels are supplied.
 from __future__ import annotations
 
 import logging
+from collections.abc import Sequence
 from pathlib import Path
-from typing import Any, Sequence
+from typing import Any
 
 import matplotlib.pyplot as plt
-import matplotlib.patches as mpatches
 import networkx as nx
 import numpy as np
 import seaborn as sns
 
 from asd_eeg.visualization.common import (
+    CMAP_CONNECTIVITY,
+    PUBLICATION_DPI,
     apply_publication_style,
     save_figure,
     validate_array,
     validate_labels,
-    CMAP_CONNECTIVITY,
-    PUBLICATION_DPI,
-    DEFAULT_FIGSIZE,
 )
 
 logger = logging.getLogger(__name__)

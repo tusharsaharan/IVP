@@ -10,6 +10,6 @@ Modules:
     results      — Model evaluation and comparison plots.
 """
 
-from asd_eeg.visualization import common, eeg, connectivity, quantum, kernels, results
+from asd_eeg.visualization import common, connectivity, eeg, kernels, quantum, results
 
-__all__ = ["common", "eeg", "connectivity", "quantum", "kernels", "results"]
+__all__ = ["common", "connectivity", "eeg", "kernels", "quantum", "results"]

@@ -31,19 +31,20 @@ from __future__ import annotations
 
 import json
 import logging
+from collections.abc import Callable, Sequence
 from pathlib import Path
-from typing import Any, Callable, Sequence
+from typing import Any
 
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 
 from asd_eeg.visualization.common import (
+    DEFAULT_FIGSIZE,
+    PUBLICATION_DPI,
     apply_publication_style,
     save_figure,
     validate_array,
-    PUBLICATION_DPI,
-    DEFAULT_FIGSIZE,
 )
 
 logger = logging.getLogger(__name__)
@@ -623,3 +624,23 @@ def plot_case_study(
         plt.close(fig)
 
     return fig
+
+
+def connection_sensitivity(bundle: dict, feature_vector: np.ndarray) -> list[dict]:
+    """Compatibility interface for app and inference pipeline."""
+    model = bundle["model"]
+    config = model.config
+    original = float(model.predict(feature_vector[None, :])[1][0])
+    rows = []
+    for index, (i, j) in enumerate(config.edges):
+        changed = feature_vector.copy()
+        positions = [4 * len(config.nodes) + index, 4 * len(config.nodes) + len(config.edges) + index]
+        changed[positions] = model.feature_reference[positions]
+        score = float(model.predict(changed[None, :])[1][0])
+        rows.append({
+            "connection": f"{config.nodes[i].name} / {config.nodes[j].name}",
+            "original_score": original,
+            "perturbed_score": score,
+            "score_change": score - original,
+        })
+    return rows

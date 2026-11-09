@@ -3,27 +3,27 @@
 from __future__ import annotations
 
 import json
+
+import matplotlib
 import numpy as np
 import pandas as pd
 import pytest
-import matplotlib
+
 matplotlib.use("Agg")
 
-from asd_eeg.explainability import perturbation as pert_module
 from asd_eeg.explainability.perturbation import (
-    N_FEATURES,
-    N_CONNECTIONS,
     EDGES,
-    MEDIAN_CONN_START,
     IQR_CONN_START,
+    MEDIAN_CONN_START,
+    N_CONNECTIONS,
+    N_FEATURES,
     compute_training_references,
-    run_perturbation_analysis,
-    run_batch_perturbation,
-    save_perturbation_results,
-    plot_perturbation_sensitivity,
     plot_case_study,
+    plot_perturbation_sensitivity,
+    run_batch_perturbation,
+    run_perturbation_analysis,
+    save_perturbation_results,
 )
-
 
 # ---------------------------------------------------------------------------
 # Fixtures

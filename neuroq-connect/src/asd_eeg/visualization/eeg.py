@@ -10,21 +10,20 @@ Expected array shape: (n_channels, n_samples)
 from __future__ import annotations
 
 import logging
+from collections.abc import Sequence
 from pathlib import Path
-from typing import Any, Sequence
+from typing import Any
 
 import matplotlib.pyplot as plt
 import numpy as np
 
 from asd_eeg.visualization.common import (
+    DEFAULT_FIGSIZE,
+    PUBLICATION_DPI,
     apply_publication_style,
-    ensure_output_dir,
     save_figure,
     validate_array,
     validate_labels,
-    DEFAULT_FIGSIZE,
-    DEFAULT_DPI,
-    PUBLICATION_DPI,
 )
 
 logger = logging.getLogger(__name__)
