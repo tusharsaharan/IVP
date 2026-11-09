@@ -78,6 +78,14 @@ def _archive_arrays(dataset: FeatureDataset) -> dict[str, np.ndarray]:
     return arrays
 
 
+def feature_schema_path(path: str | Path) -> Path:
+    """Give each archive its own sidecar, retaining the agreed default filename."""
+    path = Path(path)
+    if path.name == "subject_features.npz":
+        return path.with_name("feature_schema.json")
+    return path.with_name(f"{path.stem}.feature_schema.json")
+
+
 def save_features(dataset: FeatureDataset, path: str | Path) -> None:
     dataset.validate()
     path = Path(path)
@@ -85,10 +93,9 @@ def save_features(dataset: FeatureDataset, path: str | Path) -> None:
         raise ValueError("Feature output must use the .npz extension.")
     path.parent.mkdir(parents=True, exist_ok=True)
     np.savez_compressed(path, **_archive_arrays(dataset))
-    schema = dataset.metadata.get("feature_schema")
-    if schema is not None:
-        schema_path = path.with_name("feature_schema.json")
-        schema_path.write_text(json.dumps(schema, indent=2), encoding="utf-8")
+    schema = feature_schema(Config.from_dict(dataset.metadata["config"]))
+    schema_path = feature_schema_path(path)
+    schema_path.write_text(json.dumps(schema, indent=2), encoding="utf-8")
 
 
 def load_features(path: str | Path) -> FeatureDataset:
@@ -98,37 +105,17 @@ def load_features(path: str | Path) -> FeatureDataset:
                       "window_subject_index", "window_recording_ids")
     optional: dict[str, np.ndarray] = {}
     with np.load(path, allow_pickle=False) as archive:
-        if "window_recording_ids" in archive:
-            optional["window_recording_ids"] = archive["window_recording_ids"].astype(str)
         for name in optional_names:
-            if name != "window_recording_ids" and name in archive:
+            if name in archive:
                 optional[name] = archive[name]
         dataset = FeatureDataset(archive["X"], archive["y"],
                                  archive["subject_ids"].astype(str),
                                  json.loads(str(archive["metadata"].item())), **optional)
     dataset.validate()
     config = Config.from_dict(dataset.metadata["config"])
-    if dataset.metadata.get("schema_version") != 1 or dataset.metadata["config_id"] != config.id:
-        raise ValueError("Feature archive configuration or schema is inconsistent.")
-    if dataset.X.shape[1] != config.n_features:
-        raise ValueError("Feature archive width does not match its configuration.")
-    for name, matrix in (("median", dataset.connectivity_median),
-                         ("IQR", dataset.connectivity_iqr)):
-        if matrix is not None and matrix.shape[1:] != (len(config.nodes), len(config.nodes)):
-            raise ValueError(f"Connectivity {name} matrices do not match the configured nodes.")
-    if (dataset.window_connectivity is not None
-            and dataset.window_connectivity.shape[1] != len(config.edges)):
-        raise ValueError("Window connectivity does not match the configured edge order.")
-    if dataset.metadata.get("data_kind") not in {"recorded", "synthetic"}:
-        raise ValueError("Feature archive must declare recorded or synthetic provenance.")
-    schema = dataset.metadata.get("feature_schema")
-    if schema is not None and (schema.get("config_id") != config.id
-                               or schema.get("feature_count") != config.n_features):
-        raise ValueError("Embedded feature schema does not match the archive configuration.")
-    schema_path = path.with_name("feature_schema.json")
+    schema_path = feature_schema_path(path)
     if schema_path.is_file():
         sidecar = json.loads(schema_path.read_text(encoding="utf-8"))
-        if (sidecar.get("config_id") != config.id
-                or sidecar.get("feature_count") != config.n_features):
+        if sidecar != feature_schema(config):
             raise ValueError("Feature schema file does not match the archive configuration.")
     return dataset

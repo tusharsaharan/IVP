@@ -62,7 +62,8 @@ def _validate_output(subject_id: str, vector: np.ndarray, connectivity: np.ndarr
             raise ValueError(f"{subject_id}: connectivity {name} matrix is not symmetric.")
         if not np.allclose(np.diag(matrix), diagonal, atol=1e-8):
             raise ValueError(f"{subject_id}: connectivity {name} matrix has an invalid diagonal.")
-        if np.any(matrix < -1.0 - 1e-8) or (name == "median" and np.any(matrix > 1.0 + 1e-8)):
+        lower, upper = (-1.0, 1.0) if name == "median" else (0.0, 2.0)
+        if np.any(matrix < lower - 1e-8) or np.any(matrix > upper + 1e-8):
             raise ValueError(f"{subject_id}: connectivity {name} matrix is outside its valid range.")
 
 

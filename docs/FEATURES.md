@@ -48,7 +48,9 @@ Windows accepted by preprocessing are pooled across a subject's recordings in `r
 | `window_subject_index` | `[used_windows]` | Feature row for each window |
 | `window_recording_ids` | `[used_windows]` | Recording source for each window |
 
-The sibling `feature_schema.json` describes every feature index, source node or edge, units, and aggregation. It must match the archive configuration.
+The schema describes every feature index, source node or edge, units, and aggregation. It must exactly match the archive configuration and feature order. The default `subject_features.npz` uses the sibling `feature_schema.json`; other archives use `<archive-stem>.feature_schema.json`, so multiple configurations can share a folder safely. Use `feature_schema_path` from `asd_eeg.features.cache` to locate an archive's sidecar. Legacy shared sidecars for differently named archives are not authoritative; their embedded schema and configured feature names are validated instead.
+
+Before saving or evaluation, validation checks graph ranges and agreement with `X`, reconciles window counts and subject indices, and verifies that saved windows reproduce the connectivity medians and IQRs. Older schema-1 archives without the optional graph/window arrays remain usable.
 
 ## Commands
 

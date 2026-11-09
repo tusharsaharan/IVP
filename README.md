@@ -57,7 +57,7 @@ By default prediction requires a subject held out in the selected fold. Use `--a
 
 - Continuous NPZ, EEGLAB SET, EDF, BDF, and FIF readers. SET companion files must remain alongside their recording.
 - Fixed filtering/reference, non-overlapping windows, amplitude/flat-signal checks, and explicit channel matching.
-- Four powers per node, plus median and IQR of alpha-envelope connectivity per edge. Four nodes produce 28 features. Every archive writes a validated `feature_schema.json` alongside subject median/IQR graphs and used-window edge correlations. See [the feature handoff](docs/FEATURES.md) for shapes and ordering.
+- Four powers per node, plus median and IQR of alpha-envelope connectivity per edge. Four nodes produce 28 features. Every archive writes a validated schema alongside subject median/IQR graphs and used-window edge correlations. The default archive uses `feature_schema.json`; other filenames use `<archive-stem>.feature_schema.json` to avoid collisions. See [the feature handoff](docs/FEATURES.md) for shapes and ordering.
 - Training-fold-only standardization and bounded angle encoding.
 - Feature-matched RBF-SVM, amplitude-fidelity SVM, graph-conditioned quantum kernel, and fixed edge-reassignment control.
 - Deterministic, shallow PennyLane statevector simulation. No physical quantum hardware or quantum speedup is claimed.

@@ -9,7 +9,12 @@ import pytest
 from asd_eeg.contracts import FeatureDataset
 from asd_eeg.data.loaders import load_recording
 from asd_eeg.data.manifest import read_manifest
-from asd_eeg.features.cache import build_features, load_features, save_features
+from asd_eeg.features.cache import (
+    build_features,
+    feature_schema_path,
+    load_features,
+    save_features,
+)
 from asd_eeg.features.schema import feature_names, feature_schema
 from asd_eeg.features.subject_features import extract_subject_features
 from asd_eeg.preprocessing.pipeline import preprocess_recording
@@ -43,7 +48,7 @@ def test_feature_archive_has_fixed_order_graphs_and_schema(config, completed_che
                 - np.percentile(rows[:, edge_index], 25)
             )
 
-    schema = json.loads((path.with_name("feature_schema.json")).read_text())
+    schema = json.loads(feature_schema_path(path).read_text())
     assert schema["feature_count"] == 28
     assert schema["label_free"] is True
     assert [feature["name"] for feature in schema["features"]] == list(feature_names(config))
@@ -156,6 +161,5 @@ def test_archive_graph_shape_must_match_configuration(completed_check, tmp_path)
         connectivity_iqr=np.zeros((subjects, 3, 3)),
     )
     path = tmp_path / "wrong-graph.npz"
-    save_features(wrong, path)
     with pytest.raises(ValueError, match="configured nodes"):
-        load_features(path)
+        save_features(wrong, path)
