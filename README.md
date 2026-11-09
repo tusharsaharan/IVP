@@ -2,7 +2,7 @@
 
 Shared foundation for Group 8's EEG autism-classification project. A light Streamlit workspace connects verified recordings, regional connectivity features, quantum kernels, subject-wise evaluation, and saved-model inference.
 
-**Status:** runnable starter implementation. No verified KAU/TUOS cohort or clinical performance is included. The optional synthetic check verifies software only and is labelled separately throughout the interface.
+**Status:** runnable research implementation. The recorded-data workflow targets SFARI resting-state EEG (`ds006780`), not KAU. Recordings, local cohort manifests, and generated results are excluded from Git. No clinical validity is claimed. The optional synthetic check verifies software only and is labelled separately throughout the interface.
 
 ## Install and launch
 
@@ -35,6 +35,10 @@ Outputs go to `artifacts/software-check/`. In the application, open **Software c
 
 ## Connect the team's real data
 
+For the selected SFARI dataset, follow [the acquisition and integration guide](docs/SFARI.md). It downloads only explicitly labelled ASD/TD resting-state recordings, verifies SHA-256 hashes, writes explicit quality exclusions, and activates shared CLI/application paths. KAU is not required. HBN diagnosis labels and the unlabelled SET folder are not substitutes for verified labels.
+
+For a different verified dataset:
+
 1. Sahil fills `data/metadata/recordings.csv` using authoritative labels. Keep recordings outside Git.
 2. Sahil and Aryan update `configs/default.yaml` for the verified montage, reference, and recording protocol. Default F3/F4/P3/P4 nodes are a starting configuration, not a confirmed dataset specification.
 3. Validate, extract, and evaluate:
@@ -58,6 +62,8 @@ neuroq predict --manifest data/metadata/recordings.csv --subject SUBJECT_ID --bu
 ```
 
 By default prediction requires a subject held out in the selected fold. Use `--allow-new-subject` only for genuinely unseen subjects; training subjects remain blocked. Scores are SVM decision scores, not calibrated probabilities.
+
+`neuroq use-workspace` writes the ignored `data/local/workspace.json`. Subsequent CLI commands and a fresh Streamlit session use its manifest, pipeline configuration, feature archive, and results folder. Explicit CLI path arguments override defaults. The evaluation module entry point remains a standalone archive runner; supply its feature/output arguments when using a custom workspace. The app and active CLI evaluation reject stale feature archives with a different dataset, configuration, cohort, labels, or recorded-session IDs.
 
 ## Implemented baseline protocol
 

@@ -3,8 +3,33 @@
 from pathlib import Path
 
 import numpy as np
+import pandas as pd
 
 from asd_eeg.contracts import EEGRecording
+
+
+def apply_channel_metadata(raw, path: Path) -> None:
+    """Honor an accompanying BIDS channel table; never guess electrode equivalents."""
+    if not path.stem.endswith("_eeg"):
+        return
+    sidecar = path.with_name(path.stem.removesuffix("_eeg") + "_channels.tsv")
+    if not sidecar.is_file():
+        return
+    table = pd.read_csv(sidecar, sep="\t", dtype=str, keep_default_na=False)
+    if not {"name", "type", "status"}.issubset(table):
+        raise ValueError("BIDS channel metadata needs name, type, and status columns.")
+    if table.name.duplicated().any() or table.name.tolist() != raw.ch_names:
+        raise ValueError("BIDS channel names/order do not match the recording header.")
+    kinds = {"EEG": "eeg", "EOG": "eog", "ECG": "ecg", "EMG": "emg",
+             "TRIG": "stim", "MISC": "misc"}
+    if not table.type.isin(kinds).all() or not table.status.isin(["good", "bad"]).all():
+        raise ValueError("Unsupported BIDS channel type/status; review the recording metadata.")
+    current = dict(zip(raw.ch_names, raw.get_channel_types(), strict=True))
+    changes = {row.name: kinds[row.type] for row in table.itertuples()
+               if current[row.name] != kinds[row.type]}
+    if changes:
+        raw.set_channel_types(changes, verbose="ERROR")
+    raw.info["bads"] = sorted(set(raw.info["bads"]) | set(table[table.status.eq("bad")].name))
 
 
 def load_recording(row) -> EEGRecording:
@@ -32,6 +57,7 @@ def load_recording(row) -> EEGRecording:
             raise ValueError(f"Unsupported EEG format: {path.suffix}")
         try:
             raw = reader(str(path), preload=True, verbose="ERROR")
+            apply_channel_metadata(raw, path)
             raw.pick("eeg", exclude="bads")
             data, sfreq, channels = raw.get_data(), float(raw.info["sfreq"]), tuple(raw.ch_names)
         except (OSError, ValueError, TypeError, RuntimeError) as exc:

@@ -4,7 +4,7 @@
 
 1. Read your section in `docs/TEAM.md` and the contracts in `docs/CONTRACTS.md`.
 2. Pull the latest main branch.
-3. Create a short feature branch, for example `sahil/verified-kau-loader` or `aryan/connectivity-qc`.
+3. Create a short feature branch, for example `sahil/verified-data-loader` or `aryan/connectivity-qc`.
 4. Keep changes within your owned module unless you coordinate the handoff with Tushar and Vivek.
 
 ```bash
