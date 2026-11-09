@@ -39,7 +39,7 @@ Full eligibility status and exclusion rationales are recorded in `data/metadata/
    - All channels are finite and non-NaN.
    - Channel standard deviation exceeds $10^{-12}$ V (flat-line check).
    - Maximum peak-to-peak amplitude is $\le 300\ \mu\text{V}$.
-7. **Common duration budget:** Exactly 18 accepted clean windows (144.0 seconds) are deterministically selected across each subject's recording via linear spacing, ensuring that all 45 subjects contribute identical temporal signal duration to feature extraction.
+7. **Common duration budget:** Exactly 18 accepted 8-second clean windows (144.0 seconds of accepted EEG data in total) are deterministically selected across each subject's accepted window timeline using linear index spacing (`np.linspace`). Because rejected epochs or downsampling may create non-adjacent sampling intervals, this represents 144 seconds of accepted EEG data in total rather than 144 strictly consecutive seconds.
 
 ## Four-node scalp montage (scalp measurement sites)
 
@@ -74,9 +74,16 @@ Features are standardized on training folds only and bounded by $\phi = \frac{\p
 
 ## Statistical methodology & evaluation notes
 
-1. **Confidence intervals:** Wilson score intervals apply specifically to the unweighted accuracy binomial proportion ($k / N$). They do not apply to balanced accuracy or ROC-AUC.
-2. **Recommended paired statistical tests:**
-   - **For paired classification differences:** McNemar's exact test on out-of-fold contingency tables.
-   - **For balanced accuracy and AUC uncertainty:** Stratified subject-level bootstrap (e.g., 2,000 resamples) or DeLong's test for comparing correlated ROC curves.
-3. **Sensor-level limitation:** Sensor-level alpha envelope correlation reflects functional statistical coupling between scalp measurement sites, but is subject to volume conduction and common reference effects. It must not be interpreted as anatomical or causal connectivity.
-4. **Class balance:** With 26 ASD and 19 Control subjects, the majority-class baseline is $26/45 = 57.78\%$.
+1. **Confidence intervals:** Wilson score intervals apply specifically to the unweighted overall accuracy proportion ($k / N$). They do not apply to balanced accuracy or ROC-AUC.
+2. **Fold-preserving stratified bootstrap (2,000 resamples):**
+   - Uncalibrated SVM decision margins from distinct folds cannot be pooled into a single global ranking without risking scale distortions.
+   - To estimate sampling uncertainty without pooling, the bootstrap resamples ASD and Control participants independently within each fold.
+   - For every iteration, fold AUC is computed within each of the 5 test folds and averaged to yield the resampled Mean Fold AUC.
+   - Results on the 18-window configuration:
+     - **RBF-SVM:** Mean Fold AUC = 0.5467 (95% CI: [0.386, 0.709]); Balanced Acc = 0.5445 (95% CI: [0.427, 0.669])
+     - **Amplitude Kernel:** Mean Fold AUC = 0.4722 (95% CI: [0.310, 0.647]); Balanced Acc = 0.5374 (95% CI: [0.399, 0.667])
+     - **Proposed Quantum Kernel:** Mean Fold AUC = 0.3789 (95% CI: [0.208, 0.550]); Balanced Acc = 0.4798 (95% CI: [0.355, 0.609])
+     - **Reassigned Control:** Mean Fold AUC = 0.5833 (95% CI: [0.403, 0.776]); Balanced Acc = 0.5516 (95% CI: [0.420, 0.700])
+3. **Paired classification differences:** McNemar's exact test on out-of-fold contingency tables shows no statistically significant classification differences between any pair of models ($p \ge 0.6476$).
+4. **Sensor-level limitation:** Sensor-level alpha envelope correlation reflects functional statistical coupling between scalp measurement sites, but is subject to volume conduction and common reference effects. It must not be interpreted as anatomical or causal connectivity.
+5. **Class balance:** With 26 ASD and 19 Control subjects, the majority-class baseline is $26/45 = 57.78\%$.
