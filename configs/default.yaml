@@ -1,13 +1,13 @@
-# Review these settings against the verified recording montage before evaluation.
+# Verified four-node montage for TUOS (The University of Sheffield) cohort.
 nodes:
   - name: Left frontal
-    channels: [F3]
-  - name: Right frontal
-    channels: [F4]
+    channels: [F7]
+  - name: Frontal midline
+    channels: [Fz]
   - name: Left posterior
-    channels: [P3]
+    channels: [P1]
   - name: Right posterior
-    channels: [P4]
+    channels: [O2]
 bands:
   - {name: delta, low: 1.0, high: 4.0}
   - {name: theta, low: 4.0, high: 8.0}

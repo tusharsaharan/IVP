@@ -26,3 +26,4 @@ results/*
 *.avi
 *.mp4
 .DS_Store
+*.zip
