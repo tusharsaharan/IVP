@@ -24,6 +24,7 @@ from asd_eeg.models.quantum_circuit import circuit_text
 from asd_eeg.self_check import run_self_check
 from asd_eeg.training.model import MODELS
 from asd_eeg.visualization.plots import confusion_figure, connectivity_figure, signal_figure
+from asd_eeg.workspace import check_feature_workspace, workspace_paths
 
 ROOT = Path(os.environ.get("NEUROQ_ROOT", Path(__file__).resolve().parents[1])).resolve()
 PAGES = ["Workspace", "Datasets", "Analysis", "Experiments", "Team", "Software check"]
@@ -38,6 +39,11 @@ TEAM = [
 ]
 
 st.set_page_config(page_title="NeuroQ-Connect", layout="wide", initial_sidebar_state="expanded")
+try:
+    PATHS = workspace_paths(ROOT)
+except (OSError, ValueError) as exc:
+    st.error(f"Could not read data/local/workspace.json: {exc}")
+    st.stop()
 st.markdown("""
 <style>
 :root { --paper: oklch(0.98 0.003 120); --ink: #243342; --muted: #526273; --rule: #dce2e5; }
@@ -89,7 +95,7 @@ def show_figure(fig, filename: str | None = None) -> None:
 
 def completed_runs() -> list[tuple[Path, dict]]:
     runs = []
-    for path in sorted((ROOT / "results").glob("run-*/summary.json"), reverse=True):
+    for path in sorted(local_path(PATHS["results"]).glob("run-*/summary.json"), reverse=True):
         try:
             summary = json.loads(path.read_text(encoding="utf-8"))
             if summary.get("status") == "complete" and summary.get("data_kind") == "recorded":
@@ -115,9 +121,9 @@ with st.sidebar:
     st.write("Classical quantum-circuit simulation")
     st.caption("Verified recordings and saved experiments stay on this computer.")
     with st.expander("Local paths"):
-        st.text_input("Manifest CSV", "data/metadata/recordings.csv", key="manifest_path")
-        st.text_input("Pipeline configuration", "configs/default.yaml", key="config_path")
-        st.text_input("Feature archive", "artifacts/features/subject_features.npz", key="features_path")
+        st.text_input("Manifest CSV", PATHS["manifest"], key="manifest_path")
+        st.text_input("Pipeline configuration", PATHS["config"], key="config_path")
+        st.text_input("Feature archive", PATHS["features"], key="features_path")
     st.caption("Group 8 · Course project")
 
 manifest_path = local_path(st.session_state["manifest_path"])
@@ -224,11 +230,18 @@ def display_results(run: Path, summary: dict) -> None:
     comparison = pd.read_csv(run / "model_comparison.csv")
     st.caption(f"{summary['dataset']} · {summary['subjects']} subjects · {summary['folds']} subject-wise folds · Seed {summary['seed']}")
     st.write(summary["protocol"] + ".")
-    display = comparison[["model", "balanced_accuracy", "macro_f1", "sensitivity", "specificity", "mean_fold_auc"]].copy()
+    columns = ["model", "balanced_accuracy", "macro_f1", "sensitivity", "specificity", "mean_fold_auc"]
+    optional = {"std_fold_auc": "Fold AUC SD", "fold_auc_count": "Defined AUC folds"}
+    columns.extend(column for column in optional if column in comparison)
+    display = comparison[columns].copy()
     display["model"] = display.model.map(MODELS)
-    display.columns = ["Model", "Balanced accuracy", "Macro-F1", "Sensitivity", "Specificity", "Mean fold AUC"]
-    st.dataframe(display.style.format({c: "{:.3f}" for c in display.columns[1:]}), hide_index=True, width="stretch")
+    display.columns = ["Model", "Balanced accuracy", "Macro-F1", "Sensitivity", "Specificity", "Mean fold AUC"] + [optional[c] for c in columns[6:]]
+    formatting = {c: "{:.3f}" for c in display.columns[1:]}
+    if "Defined AUC folds" in display:
+        formatting["Defined AUC folds"] = "{:.0f}"
+    st.dataframe(display.style.format(formatting, na_rep="Undefined"), hide_index=True, width="stretch")
     st.caption("AUC is computed within each held-out fold, then averaged. Decision scores are not pooled across differently fitted SVMs.")
+    st.caption("Fold AUC SD is descriptive spread, not a confidence interval. This is a research comparison, not a clinical diagnostic tool.")
     selected = st.selectbox("Confusion matrix model", list(MODELS), format_func=MODELS.get)
     left, right = st.columns([1, 1.3], gap="large")
     with left:
@@ -251,6 +264,7 @@ def experiments_page() -> None:
     if feature_path.is_file():
         try:
             dataset = load_features(feature_path)
+            check_feature_workspace(dataset, manifest_path, config)
             ready = dataset.metadata["data_kind"] == "recorded"
             st.caption(f"Feature archive: {len(dataset.y)} subjects · {dataset.X.shape[1]} features · {dataset.metadata['dataset']}")
             if not ready:
@@ -263,7 +277,7 @@ def experiments_page() -> None:
         try:
             with st.status("Evaluating subject-wise folds...", expanded=True) as status:
                 st.write("Fitting the RBF, amplitude, quantum, and reassigned-connection models.")
-                run_evaluation(dataset, ROOT / "results")
+                run_evaluation(dataset, local_path(PATHS["results"]))
                 status.update(label="Experiment saved", state="complete", expanded=False)
         except (OSError, ValueError, RuntimeError) as exc:
             st.error(str(exc))

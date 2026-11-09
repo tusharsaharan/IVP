@@ -14,7 +14,7 @@ This branch delivers:
 1. **A verified real-data cohort** (TUOS, 56 continuous resting-state EEG recordings).
 2. **Authoritative diagnosis labels** extracted directly from internal EEGLAB structures, resolving a critical header/filename mismatch that would have corrupted the study.
 3. **An empirically validated four-node scalp montage** (`F7`, `Fz`, `P1`, `O2`) supported across the cohort.
-4. **A conservative, documented preprocessing pipeline** with an exact 18-window (144.0 seconds) common duration budget.
+4. **A conservative, documented preprocessing pipeline** with an 18-window cap (up to 144.0 seconds); saved window counts determine actual accepted duration.
 5. **A complete 56-subject eligibility audit** (`eligibility.csv`) and validated 45-subject manifest (`recordings.csv`).
 6. **End-to-end verified features and benchmark evaluations** with fold-preserving bootstrap statistics and zero data leakage.
 
@@ -26,7 +26,7 @@ This branch delivers:
 * **Selected & Frozen Dataset:** **TUOS** (*The University of Sheffield*), published by Dickinson, Jeste, & Milne (2022), *Cortex*, 148, 139–151 (DOI: `10.1016/j.cortex.2021.09.022`; Figshare DOI: `10.15131/shef.data.16840351`).
 * **Why Candidate Datasets Were Rejected:**
   * **KAU:** Unavailable; raw recordings, verified labels, and channel montage files were not provided.
-  * **OpenNeuro (`ds006780`, `ds005512`):** Inspected in the raw archive and proven to be Git-Annex pointer stubs (~200 bytes) containing no binary EEG data payloads.
+  * **OpenNeuro (`ds006780`, `ds005512`):** The inspected metadata clones initially contained Git-Annex pointer stubs (~200 bytes), not EEG payloads. This is not evidence that the recordings are unavailable. Tushar's optional [SFARI workflow](docs/SFARI.md) can retrieve verified `ds006780` payloads separately; TUOS remains primary.
 * **Raw Files on Local Disk:** 56 EEGLAB `.set` header and companion `.fdt` binary data files located in `data/raw/tuos/` (git-ignored for data privacy and repository cleanliness).
 
 ### B. Critical Label Resolution (Header vs. Filename Mismatch)
@@ -63,7 +63,7 @@ Configured in [`configs/default.yaml`](configs/default.yaml) and [`configs/prepr
 4. **Bandpass Filtering:** 1.0 Hz to 40.0 Hz zero-phase 4th-order Butterworth filter (`sosfiltfilt`, effective order 8).
 5. **Resampling:** Polyphase rational downsampling from 512 Hz to 128 Hz.
 6. **Artifact Rejection:** 8.0-second non-overlapping windows (1024 samples) rejected if $\text{peak-to-peak} > 300\ \mu\text{V}$ or $\text{std} < 10^{-12}\ \text{V}$.
-7. **Common Duration Budget (`max_windows = 18`):** Exactly 18 accepted 8-second clean windows (144.0 seconds of accepted EEG data in total) are deterministically selected across each subject's timeline using `np.linspace`. Every subject contributes identical signal duration.
+7. **Window Budget (`max_windows = 18`):** Select up to 18 accepted 8-second windows, using `np.linspace` when the pool exceeds the cap. Eighteen windows represent 144.0 seconds of accepted EEG, not necessarily consecutive time. The shared pipeline requires at least three accepted windows per recording, not exactly 18 per subject. Verify the saved window counts before claiming identical duration.
 
 ---
 

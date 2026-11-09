@@ -2,7 +2,7 @@
 
 Shared foundation for Group 8's EEG autism-classification project. A light Streamlit workspace connects verified recordings, regional connectivity features, quantum kernels, subject-wise evaluation, and saved-model inference.
 
-**Status:** runnable starter implementation. No verified KAU/TUOS cohort or clinical performance is included. The optional synthetic check verifies software only and is labelled separately throughout the interface.
+**Status:** runnable research implementation. TUOS is the primary recorded-data cohort, using Sahil's manifest and F7/Fz/P1/O2 configuration. SFARI resting-state EEG (`ds006780`) remains an optional separate acquisition/workspace workflow; KAU is out of scope. Raw recordings, local workspace profiles, model bundles, and generated results are excluded from Git. No clinical validity is claimed. The optional synthetic check verifies software only and is labelled separately throughout the interface.
 
 ## Install and launch
 
@@ -35,9 +35,13 @@ Outputs go to `artifacts/software-check/`. In the application, open **Software c
 
 ## Connect the team's real data
 
-1. Sahil fills `data/metadata/recordings.csv` using authoritative labels. Keep recordings outside Git.
-2. Sahil and Aryan update `configs/default.yaml` for the verified montage, reference, and recording protocol. Default F3/F4/P3/P4 nodes are a starting configuration, not a confirmed dataset specification.
-3. Validate, extract, and evaluate:
+The primary TUOS handoff is documented in [README_SAHIL.md](README_SAHIL.md) and [the method notes](docs/METHOD.md): 45 eligible subjects (26 ASD, 19 Control), with exclusions in `data/metadata/eligibility.csv`. Obtain the source recordings and keep their SET/FDT pairs under ignored `data/raw/tuos/`, matching the relative paths in `data/metadata/recordings.csv`. The manifest alone does not contain EEG payloads.
+
+`configs/default.yaml` uses F7/Fz/P1/O2, 50 Hz mains, and an 18-window cap. Check saved window counts before claiming identical accepted duration. For another verified dataset, use a separate authoritative manifest and dataset-specific configuration agreed with Sahil and Aryan, not guessed labels or electrode equivalents.
+
+SFARI is optional: [the acquisition and integration guide](docs/SFARI.md) downloads explicit ASD/TD resting-state recordings, verifies hashes, and saves QC exclusions. Its F3/F4/P3/P4, 60 Hz, 20-window configuration remains separate from TUOS. Do not combine their cohorts, archives, or bundles. HBN diagnosis labels and unlabelled recordings are not substitutes for verified labels.
+
+Validate, extract, and evaluate TUOS:
 
 ```powershell
 neuroq validate --manifest data/metadata/recordings.csv
@@ -58,6 +62,16 @@ neuroq predict --manifest data/metadata/recordings.csv --subject SUBJECT_ID --bu
 ```
 
 By default prediction requires a subject held out in the selected fold. Use `--allow-new-subject` only for genuinely unseen subjects; training subjects remain blocked. Scores are SVM decision scores, not calibrated probabilities.
+
+`neuroq use-workspace` writes the ignored `data/local/workspace.json`. Subsequent CLI commands and a fresh Streamlit session use its manifest, pipeline configuration, feature archive, and results folder. Explicit CLI path arguments override defaults. The evaluation module entry point remains a standalone archive runner; supply its feature/output arguments when using a custom workspace. The app and active CLI evaluation reject stale feature archives with a different dataset, configuration, cohort, labels, or recorded-session IDs.
+
+If a local profile already selects SFARI, explicitly activate TUOS before launching the app. Keep dataset outputs separate:
+
+```powershell
+neuroq use-workspace --manifest data/metadata/recordings.csv --config configs/default.yaml --features artifacts/tuos/subject_features.npz --results results/tuos
+```
+
+Restart Streamlit after changing profiles. Activating a profile does not download recordings or train models.
 
 ## Implemented baseline protocol
 

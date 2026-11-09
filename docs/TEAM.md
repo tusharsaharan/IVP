@@ -19,7 +19,7 @@ All modules already have a working starting implementation. Extend and validate 
 **Own:** `data/metadata/recordings.csv`, `src/asd_eeg/data/`, `src/asd_eeg/preprocessing/`, preprocessing/channel configuration.
 
 - First handoff: one readable recording, electrode metadata, and an authoritative label source.
-- Freeze the available dataset. KAU is intended primary; TUOS requires verified labels and montage mapping before use.
+- The primary dataset is TUOS, using the verified manifest and exclusion ledger from Sahil's handoff. Review `README_SAHIL.md` and `METHOD.md`. SFARI resting-state EEG (`ds006780`) remains optional through `SFARI.md`; verify its explicit ASD/TD labels and separate QC ledger before use. KAU is out of scope.
 - Check subjects versus sessions, references, conditions, sampling rates, companion files, and downloaded payloads.
 - Populate the manifest and explicit exclusions. The starter stops on unusable recordings rather than silently removing them.
 - Adapt preprocessing/QC to the real data and document any prior cleaning.
@@ -42,7 +42,7 @@ All modules already have a working starting implementation. Extend and validate 
 
 **Own:** `src/asd_eeg/features/`, feature configuration.
 
-- Agree on available node channels with Sahil. The shipped F3/F4/P3/P4 mapping is not yet verified for KAU.
+- Agree on available node channels with Sahil. TUOS defaults use F7/Fz/P1/O2 in that order with an 18-window cap. Optional SFARI uses F3/F4/P3/P4 and a 20-window cap in `configs/sfari_rest.yaml`. Preserve each configuration's node/edge order and rebuild archives/bundles when changing dataset or configuration.
 - Review power normalization, envelope connectivity, filter boundaries, and window aggregation.
 - Check finite values, symmetric graphs, deterministic channel ordering, and the fixed 28-feature contract.
 - Use the generated `feature_schema.json` to explain every feature and to verify feature order.
@@ -56,6 +56,7 @@ All modules already have a working starting implementation. Extend and validate 
 
 - Keep the application and CLI on the same inference function.
 - Integrate verified data and completed results without hard-coded personal paths.
+- Maintain `prepare-sfari`, explicit `screen` QC, and shared local workspace activation. Check BIDS channel types so external EMG/trigger channels do not enter the EEG reference. Coordinate loader/QC decisions with Sahil and Vivek; do not tune them against held-out performance.
 - Check model configuration restoration and exact training-reference ordering.
 - Demonstrate a held-out subject, graph/circuit, score, saved results, sensitivity, and JSON export.
 - Rehearse the complete sequence before recording the AVI.

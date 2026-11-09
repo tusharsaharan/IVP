@@ -7,7 +7,7 @@ The research evaluation freezes **TUOS** as the primary real-data cohort.
 - **Archive Package:** Figshare DOI: `10.15131/shef.data.16840351`.
 - **Candidate Assessment:**
   - **KAU:** Unavailable; missing raw continuous recordings, verified labels, and channel montage.
-  - **OpenNeuro (ds006780, ds005512):** Present only as Git-Annex symlink pointer stubs (~200 bytes) without binary EEG data payloads.
+  - **OpenNeuro (ds006780, ds005512):** The inspected metadata clones initially contained only Git-Annex pointer stubs (~200 bytes), not binary EEG payloads. This does not establish that recordings are unavailable. The optional SFARI acquisition workflow below retrieves and verifies `ds006780` payloads separately.
   - **TUOS:** Extracted from Figshare package `16840351`. Contains 56 continuous eyes-closed resting-state EEG recordings (28 autistic adults and 28 neurotypical controls, aged 18–68) recorded with BioSemi ActiveTwo hardware at 512 Hz for ~150–160 seconds.
 
 ### Authoritative label provenance and header/filename mismatch resolution
@@ -39,7 +39,7 @@ Full eligibility status and exclusion rationales are recorded in `data/metadata/
    - All channels are finite and non-NaN.
    - Channel standard deviation exceeds $10^{-12}$ V (flat-line check).
    - Maximum peak-to-peak amplitude is $\le 300\ \mu\text{V}$.
-7. **Common duration budget:** Exactly 18 accepted 8-second clean windows (144.0 seconds of accepted EEG data in total) are deterministically selected across each subject's accepted window timeline using linear index spacing (`np.linspace`). Because rejected epochs or downsampling may create non-adjacent sampling intervals, this represents 144 seconds of accepted EEG data in total rather than 144 strictly consecutive seconds.
+7. **Window budget:** `configs/default.yaml` caps each TUOS subject at 18 accepted 8-second windows, selected deterministically using linear index spacing (`np.linspace`) when the pool exceeds the cap. Eighteen windows represent 144.0 seconds of accepted EEG, not necessarily consecutive time. The shared pipeline requires at least three accepted windows per recording; it does not require every subject to reach 18. Check the saved accepted/used-window counts before claiming equal duration across the cohort.
 
 ## Four-node scalp montage (scalp measurement sites)
 
@@ -78,11 +78,15 @@ Features are standardized on training folds only and bounded by $\phi = \frac{\p
 3. **Connectivity-guided quantum-kernel SVM:** Four-qubit PennyLane statevector circuit with node rotations (RY/RZ) and edge-conditioned IsingZZ entangling gates over 2 passes. Fidelity kernel $K(x,y) = |\langle\psi(x)\mid\psi(y)\rangle|^2$.
 4. **Reassigned quantum kernel:** Control experiment with fixed, label-independent permutation of edge assignments.
 
+The map is fixed, not a variationally trained QNN; the learned classifier is an SVM. The four-qubit statevector model is classically tractable and demonstrates neither quantum computational advantage nor clinical validity. Shared references and volume conduction remain limitations of the non-orthogonalized sensor-level connectivity.
+
 ## Statistical methodology & evaluation notes
 
 Fixed-setting stratified subject-wise cross-validation is used. Fold count is resolved per run; default is 5. Class balance is preserved in every fold. Preprocessing scalers are fit strictly on training folds and applied to test folds.
 
 Classification metrics are calculated from all out-of-fold labels. AUC is calculated within each fold and averaged. The evaluation module freezes subject-fold assignments once per run and recomputes all classification and AUC summaries through the shared `summarize_oof` function. AUC summaries include the mean, population standard deviation (`ddof=0`), and number of defined folds; standard deviation is descriptive fold-to-fold spread, not a confidence interval. Single-class fold AUC is undefined and omitted from its summary. OOF validation rejects duplicates, differing model cohorts/partitions, conflicting labels, nonfinite scores, and invalid fold IDs. Split creation never truncates fractional labels into diagnosis classes. Source-commit provenance is tied to the installed source checkout, not the caller's current directory.
+
+The statistics below are Sahil's reported TUOS results, with run/configuration identifiers in [README_SAHIL.md](../README_SAHIL.md). This merge verifies software integration, not those recorded-data results or the separate bootstrap calculations; their underlying local artifacts must be checked before submission. No hyperparameter search, external validation, or clinical validation is supplied by this integration. Changing settings after inspecting held-out scores requires a separately identified exploratory run.
 
 1. **Confidence intervals:** Wilson score intervals apply specifically to the unweighted overall accuracy proportion ($k / N$). They do not apply to balanced accuracy or ROC-AUC.
 2. **Fold-preserving stratified bootstrap (2,000 resamples):**
@@ -97,6 +101,24 @@ Classification metrics are calculated from all out-of-fold labels. AUC is calcul
 3. **Paired classification differences:** McNemar's exact test on out-of-fold contingency tables shows no statistically significant classification differences between any pair of models ($p \ge 0.6476$).
 4. **Sensor-level limitation:** Sensor-level alpha envelope correlation reflects functional statistical coupling between scalp measurement sites, but is subject to volume conduction and common reference effects. It must not be interpreted as anatomical or causal connectivity.
 5. **Class balance:** With 26 ASD and 19 Control subjects, the majority-class baseline is $26/45 = 57.78\%$.
+
+## Optional SFARI recorded-data workflow
+
+TUOS remains primary. Tushar's SFARI acquisition, fixed-QC screening, and local workspace activation remain available as an independent workflow; they do not replace the TUOS manifest or defaults. See [SFARI.md](SFARI.md). KAU is out of scope.
+
+Use snapshot DOI `10.18112/openneuro.ds006780.v1.0.0`. Eligibility comes from `participants.tsv` diagnostic group and resting-state availability, with definitions and provenance in `participants.json` and README. Map only explicit ASD=1 and TD=0; siblings and unknown groups are excluded, never treated as TD. Do not infer diagnoses from filenames or questionnaire scores. The inspected metadata initially lists 103 candidate participants (63 ASD, 40 TD) and 528 resting-state BDF runs; these are pre-QC counts, not final sample sizes.
+
+Acquire all eligible resting-state BDF runs into a separate ignored directory and verify annex SHA-256 hashes and byte counts. Retain source metadata and provenance hashes. Metadata describes continuous BioSemi 64-channel EEG at 512 Hz, 60 Hz mains, and directly named F3/F4/P3/P4. `configs/sfari_rest.yaml` preserves this node order and a 20-window cap, separately from TUOS's F7/Fz/P1/O2 and 18-window cap. Both retain the 28-column node/edge ordering convention, training-only transforms, model settings, fold generator, and bundle schema; their feature archives and trained bundles are not interchangeable.
+
+MNE calibrates BDF to volts. Apply ordered BIDS channel types/status before selecting EEG so external EXG channels (EMG) and the Status trigger do not enter average reference or QC. Honor bad-channel metadata and fail on missing required nodes rather than substituting electrodes.
+
+Screen each recording with the shared preprocessor before evaluation, retaining runs with at least three clean eight-second windows. Save all recording exclusions and participants with no surviving recordings. Pool sessions only within their original participant IDs and select up to 20 evenly spaced accepted windows per SFARI participant. Do not relax QC or select tasks, subsets, or settings using held-out performance. Basic fixed-rule QC is not ICA or a clinical artifact-removal protocol. Unequal duration, age/sex imbalance, reference effects, prior filtering, and differential attrition remain limitations. SFARI describes eyes-open rest, unlike the primary TUOS eyes-closed recordings; no cross-dataset validity is established.
+
+Activate a dataset-specific ignored local profile with separate feature/results paths. Active evaluation checks dataset/configuration/cohort/labels/session compatibility. Restart Streamlit after changing profiles. Raw EEG, local bundles, generated results, credentials, and personal paths remain outside Git. Real-data SFARI acquisition, final QC counts, and held-out verification must be completed and reviewed by Sahil and Vivek before making recorded-data claims.
+
+## Integration decision
+
+The integration of PRs #4 and #5 retains Sahil's TUOS defaults and manifest as primary and Tushar's SFARI configuration/workspace tools as optional, as explicitly approved for this merge. The workspace regression test now checks both distinct node maps, mains frequencies, window caps, and configuration IDs while requiring identical remaining preprocessing/model settings and the shared 28-feature/edge-order convention. No feature algorithm, label mapping, fold generation, dependency, or model-reference ordering is changed by the conflict resolution. Rebuild features and bundles whenever the selected dataset or configuration changes; never combine synthetic software checks with recorded-data results.
 
 ## Explanation
 
