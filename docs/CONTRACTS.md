@@ -44,7 +44,9 @@ For q nodes, width is `4*q + 2*(q*(q-1)/2)`. For q=4 it is 28.
 
 The configured node sequence is authoritative. Channel matching ignores case but does not guess BioSemi/standard-electrode equivalences. Bands must be ordered delta, theta, alpha, beta. Changing feature definitions requires new features and trained bundles.
 
-Feature archives use numeric arrays `X`, `y`, string `subject_ids`, and JSON `metadata`. They retain configuration, its hash, feature names, provenance, and quality counts. No feature extraction function consumes labels.
+Feature archives use numeric arrays `X`, `y`, string `subject_ids`, and JSON `metadata`. They retain configuration, its hash, feature names, provenance, and quality counts. No feature extraction function consumes labels. Schema-1 archives may also contain `connectivity_median`, `connectivity_iqr`, `window_counts`, `accepted_window_counts`, `window_connectivity`, `window_subject_index`, and string `window_recording_ids`. The schema describes every feature's index, source node or edge, units, and aggregation, and must exactly match the configured feature definitions and order. `subject_features.npz` uses the sibling `feature_schema.json`; other archives use `<archive-stem>.feature_schema.json`. Older archives without graph arrays or an embedded schema remain readable, using their original configured feature names. An unrelated shared sidecar is not authoritative for differently named archives. Exact shapes and a team handoff are in [FEATURES.md](FEATURES.md).
+
+Validation applies before saving, loading, and evaluation. Connectivity medians lie in `[-1,1]` and IQRs in `[0,2]`. Available graphs must match the corresponding `X` columns. Available window tables must cover every subject, reconcile with used-window counts, and reproduce the feature medians/IQRs.
 
 ## Model input
 
@@ -63,3 +65,5 @@ Inference uses the bundle configuration, verifies the dataset, and blocks traini
 ## Results
 
 A run is usable only when `summary.json` has `status: complete`. Failed runs preserve their error and are not displayed as results. Each subject has one out-of-fold prediction per model. `folds.csv` assigns each subject to its test fold. AUC is computed per fold and then averaged because SVM margins from separate models need not share a scale.
+
+`make_subject_folds` validates one nonempty string ID and an explicit binary label per subject, and generates partitions once for all models. `summarize_oof` requires subject IDs, fold indices, models, true/predicted labels, and finite decision scores. It rejects duplicate subject/model rows, conflicting labels, or differing cohort/fold assignments. All classification metrics and the mean, population standard deviation, and defined-fold count for AUC regenerate from `oof_predictions.csv`; wall-clock runtime does not. Undefined single-class fold AUCs are blank in CSV and excluded from summaries. The run records the source checkout commit, or `unknown` for installations without Git metadata.

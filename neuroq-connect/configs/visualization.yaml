@@ -1,0 +1,51 @@
+# NeuroQ-Connect Visualization Configuration
+# Edit these values to adjust figure appearance globally.
+
+figure:
+  default_figsize: [10, 6]
+  dpi: 150
+  publication_dpi: 300
+
+fonts:
+  family: "DejaVu Sans"
+  title_size: 14
+  label_size: 12
+  tick_size: 10
+  legend_size: 10
+  annotation_size: 9
+
+colors:
+  palette: "tab10"
+  asd_color: "#E15759"       # Red for ASD
+  td_color: "#4E79A7"        # Blue for TD (typically developing)
+  neutral_color: "#76B7B2"
+  cmap_connectivity: "RdYlBu_r"
+  cmap_kernel: "viridis"
+  cmap_diverging: "RdBu_r"
+
+output:
+  base_dir: "results"
+  figures_dir: "results/figures"
+  case_studies_dir: "results/case_studies"
+  formats: ["png", "pdf"]   # svg is also supported
+  bbox_inches: "tight"
+  pad_inches: 0.1
+
+eeg:
+  default_sfreq: 256.0
+  channel_spacing: 1.5      # Vertical spacing multiplier between EEG traces
+
+connectivity:
+  node_size: 1800
+  node_font_size: 11
+  edge_width_scale: 5.0     # Multiply edge weight for visual width
+  default_node_positions:   # Positions for 4 nodes (square layout)
+    0: [0.0, 1.0]
+    1: [1.0, 1.0]
+    2: [0.0, 0.0]
+    3: [1.0, 0.0]
+
+perturbation:
+  reference_strategy: "training_mean"   # Options: training_mean, training_median
+  bar_color: "#5778a4"
+  highlight_color: "#e49444"

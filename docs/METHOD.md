@@ -59,10 +59,16 @@ Pairwise sensor-level connectivity is evaluated across six edges:
 
 ## Feature extraction
 
+The extractor is label-free and accepts only processed recordings, a configuration, and the fixed node/edge orders. Labels are not an input. The authoritative order is node-major power, then edge medians, then edge IQRs. For four nodes the width is exactly 28.
+
 Features follow the strict 28-dimensional contract:
-1. **Scalp site band powers (features 1–16):** Welch PSD normalized by 1–30 Hz total power. Relative powers for delta [1,4), theta [4,8), alpha [8,13), and beta [13,30) bands, $\log_{10}$ transformed and median aggregated across the 18 accepted windows.
-2. **Connectivity medians (features 17–22):** Median alpha-envelope Pearson correlation across the 18 accepted windows in fixed edge order `(0,1), (0,2), (0,3), (1,2), (1,3), (2,3)`.
-3. **Connectivity variability (features 23–28):** Interquartile range (IQR, 75th percentile minus 25th percentile) of alpha-envelope correlations across the 18 accepted windows in the same edge order.
+1. **Scalp site band powers (features 1–16):** Welch PSD normalized by 1–30 Hz total power (at most 256 samples per segment). Relative power for each electrode is the integrated PSD in a half-open band divided by the integrated 1-30 Hz PSD. Bands are delta [1,4), theta [4,8), alpha [8,13), and beta [13,30). Per-channel relative powers are averaged within a node, $\log_{10}$ transformed, and then median aggregated across the 18 used windows.
+2. **Connectivity medians (features 17–22):** Continuous filtered signals receive an alpha bandpass followed by the Hilbert transform. Log envelope power is averaged across each node's electrodes. Pearson correlation of those regional log envelopes is computed separately inside each accepted window, never across the whole recording. The fixed edge order is `(0,1), (0,2), (0,3), (1,2), (1,3), (2,3)`. Edge medians across the 18 used windows become features 17–22.
+3. **Connectivity variability (features 23–28):** Interquartile range (IQR, 75th percentile minus 25th percentile) of alpha-envelope correlations across the 18 used windows in the same edge order.
+
+Accepted windows are pooled across a subject's recordings in `recording_id` order. If the pool exceeds `max_windows`, windows are selected at deterministic evenly spaced indices (`np.linspace`). The archive records accepted and used window counts, the subject median and IQR connectivity matrices, and the used-window edge correlations together with their subject and recording identifiers. `feature_schema.json` describes every feature's name, source node or edge, units, and aggregation. The configured feature order must not be changed without rebuilding features and saved model bundles.
+
+Integration validation does not change the scientific feature definitions or settings. Schemas are archive-specific (`feature_schema.json` for the default `subject_features.npz`, otherwise `<archive-stem>.feature_schema.json`). Ordered definitions are checked against the configuration; graph values and window summaries must agree with the feature columns. Optional legacy arrays may be absent, but inconsistent supplied handoff data is rejected before saving or evaluation. These are software-integrity checks, not evidence of clinical validity.
 
 ## Quantum and baseline models
 
@@ -73,6 +79,10 @@ Features are standardized on training folds only and bounded by $\phi = \frac{\p
 4. **Reassigned quantum kernel:** Control experiment with fixed, label-independent permutation of edge assignments.
 
 ## Statistical methodology & evaluation notes
+
+Fixed-setting stratified subject-wise cross-validation is used. Fold count is resolved per run; default is 5. Class balance is preserved in every fold. Preprocessing scalers are fit strictly on training folds and applied to test folds.
+
+Classification metrics are calculated from all out-of-fold labels. AUC is calculated within each fold and averaged. The evaluation module freezes subject-fold assignments once per run and recomputes all classification and AUC summaries through the shared `summarize_oof` function. AUC summaries include the mean, population standard deviation (`ddof=0`), and number of defined folds; standard deviation is descriptive fold-to-fold spread, not a confidence interval. Single-class fold AUC is undefined and omitted from its summary. OOF validation rejects duplicates, differing model cohorts/partitions, conflicting labels, nonfinite scores, and invalid fold IDs. Split creation never truncates fractional labels into diagnosis classes. Source-commit provenance is tied to the installed source checkout, not the caller's current directory.
 
 1. **Confidence intervals:** Wilson score intervals apply specifically to the unweighted overall accuracy proportion ($k / N$). They do not apply to balanced accuracy or ROC-AUC.
 2. **Fold-preserving stratified bootstrap (2,000 resamples):**
@@ -87,3 +97,11 @@ Features are standardized on training folds only and bounded by $\phi = \frac{\p
 3. **Paired classification differences:** McNemar's exact test on out-of-fold contingency tables shows no statistically significant classification differences between any pair of models ($p \ge 0.6476$).
 4. **Sensor-level limitation:** Sensor-level alpha envelope correlation reflects functional statistical coupling between scalp measurement sites, but is subject to volume conduction and common reference effects. It must not be interpreted as anatomical or causal connectivity.
 5. **Class balance:** With 26 ASD and 19 Control subjects, the majority-class baseline is $26/45 = 57.78\%$.
+
+## Explanation
+
+Connection sensitivity replaces the median and IQR of one edge with raw-feature medians from that model's training subjects and recomputes its decision score. This is an input perturbation check; correlated-feature changes can be off-distribution. It is not a causal biomarker.
+
+## Reference and distinction
+
+Saranya and Menaka (2025), IEEE Access, DOI: 10.1109/ACCESS.2025.3531979. Their paper uses wavelet/filter-bank CSP and engineered features from a private 20-child cohort. The current regional-envelope graph representation and circuit are an adaptation. Their reported accuracy must never be attributed to this code or another dataset. The proposed contribution is a controlled investigation of graph-conditioned encoding, with novelty and benefit to be assessed empirically.

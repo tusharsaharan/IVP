@@ -1,0 +1,95 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
+
+# Virtual environments
+.env
+.venv
+env/
+venv/
+ENV/
+env.bak/
+venv.bak/
+
+# Testing
+.pytest_cache/
+.coverage
+htmlcov/
+.tox/
+.nox/
+coverage.xml
+*.cover
+
+# Linting
+.ruff_cache/
+.mypy_cache/
+
+# Jupyter
+.ipynb_checkpoints/
+*.ipynb
+
+# Large EEG datasets (never commit)
+*.edf
+*.bdf
+*.fif
+*.set
+*.cnt
+*.vhdr
+*.vmrk
+*.eeg
+data/raw/
+data/processed/
+datasets/
+
+# Model checkpoints (never commit)
+*.pkl
+*.joblib
+*.h5
+*.ckpt
+models/saved/
+
+# Results (generated outputs — commit selectively)
+results/figures/*
+results/case_studies/*
+
+# Keep example placeholders
+!results/figures/.gitkeep
+!results/case_studies/.gitkeep
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Environment files
+.env.local
+*.env
+
+# Temporary
+*.tmp
+*.bak
+*.log
