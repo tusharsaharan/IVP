@@ -27,3 +27,4 @@ results/*
 *.mp4
 .DS_Store
 *.zip
+uv.lock
