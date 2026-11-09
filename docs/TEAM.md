@@ -45,9 +45,10 @@ All modules already have a working starting implementation. Extend and validate 
 - Agree on available node channels with Sahil. The shipped F3/F4/P3/P4 mapping is not yet verified for KAU.
 - Review power normalization, envelope connectivity, filter boundaries, and window aggregation.
 - Check finite values, symmetric graphs, deterministic channel ordering, and the fixed 28-feature contract.
-- Hand Dodiya the archive, Vivek a numeric example, Tushar the shared extractor, and Shivam graph summaries.
+- Use the generated `feature_schema.json` to explain every feature and to verify feature order.
+- Hand Dodiya the archive, Vivek a numeric example, Tushar the shared extractor, and Shivam the median/IQR matrices plus used-window edge values.
 
-**Done:** repeatable real-subject features, a documented feature schema, and identical extraction at training and inference.
+**Done:** repeatable real-subject features, `feature_schema.json`, graph/window archive fields, and identical extraction at training and inference. The extractor lives in `features/bandpower.py`, `features/connectivity.py`, `features/subject_features.py`, and `features/schema.py`; `extract_subject_features` remains the shared entry point.
 
 ## Tushar Saharan: integration and application
 

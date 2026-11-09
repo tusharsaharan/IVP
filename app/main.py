@@ -117,7 +117,7 @@ with st.sidebar:
     with st.expander("Local paths"):
         st.text_input("Manifest CSV", "data/metadata/recordings.csv", key="manifest_path")
         st.text_input("Pipeline configuration", "configs/default.yaml", key="config_path")
-        st.text_input("Feature archive", "artifacts/features.npz", key="features_path")
+        st.text_input("Feature archive", "artifacts/features/subject_features.npz", key="features_path")
     st.caption("Group 8 · Course project")
 
 manifest_path = local_path(st.session_state["manifest_path"])

@@ -44,7 +44,7 @@ For q nodes, width is `4*q + 2*(q*(q-1)/2)`. For q=4 it is 28.
 
 The configured node sequence is authoritative. Channel matching ignores case but does not guess BioSemi/standard-electrode equivalences. Bands must be ordered delta, theta, alpha, beta. Changing feature definitions requires new features and trained bundles.
 
-Feature archives use numeric arrays `X`, `y`, string `subject_ids`, and JSON `metadata`. They retain configuration, its hash, feature names, provenance, and quality counts. No feature extraction function consumes labels.
+Feature archives use numeric arrays `X`, `y`, string `subject_ids`, and JSON `metadata`. They retain configuration, its hash, feature names, provenance, and quality counts. No feature extraction function consumes labels. Schema-1 archives may also contain `connectivity_median`, `connectivity_iqr`, `window_counts`, `accepted_window_counts`, `window_connectivity`, `window_subject_index`, and string `window_recording_ids`. The archive's sibling `feature_schema.json` describes every feature's index, source node or edge, units, and aggregation; it must match the archive configuration. Older archives without graph arrays remain readable. Exact shapes and a team handoff are in [FEATURES.md](FEATURES.md).
 
 ## Model input
 
