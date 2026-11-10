@@ -7,9 +7,13 @@ TUOS is the primary experiment. This optional independent workflow uses SFARI `d
 The inspected snapshot lists 103 resting-state candidates (63 ASD, 40 TD), 528 BDF runs, and approximately 4.15 GB of EEG. Final counts come from the saved QC summary, not these pre-QC totals. No metrics in the software tests are recorded-data research results.
 
 The November 10 local 20-window audit retains 100 subjects (60 ASD, 40 Control)
-and **448** runs, with a compatible `[100, 28]` feature archive but no completed
-recorded-data evaluation. Sahil separately reports **438** runs under an 18-window
-handoff. Those counts are not interchangeable; see `STATUS.md` and `README_SAHIL.md`.
+and **448** runs. The completion sprint rehashed source files, reproduced QC and
+raw-input `[100, 28]` features, and completed run `run-20261110-045223-cfdc86` on
+shared fixed folds. Accuracy is 46–50%, below the 60% majority-class baseline;
+see `TUSHAR_HANDOFF.md` and `METHOD.md`. Sahil's **438** runs are a subset with the
+same subjects/labels; ten additional runs across three subjects account for the
+retained-count difference. The older acquisition/QC cause and final owner acceptance
+are unresolved. These protocols/results are not interchangeable.
 
 ## Acquire recordings
 

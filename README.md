@@ -2,7 +2,7 @@
 
 Shared foundation for Group 8's EEG autism-classification project. A light Streamlit workspace connects verified recordings, regional connectivity features, quantum kernels, subject-wise evaluation, and saved-model inference.
 
-**Status:** runnable research implementation, not a finished research submission. TUOS is the primary protocol retained from Sahil's handoff, using F7/Fz/P1/O2. SFARI resting-state EEG (`ds006780`) is a separate acquisition/workspace workflow; KAU is out of scope. Populated manifests, raw recordings, local profiles, model bundles, and generated results are excluded from Git. No clinical validity is claimed. The synthetic check verifies software only. See [verified progress and remaining work](docs/STATUS.md).
+**Status:** integrated research software with a reproduced local SFARI four-model experiment and real held-out CLI/application agreement. Recorded accuracy is 46–50%; no clinical utility or quantum advantage is established. TUOS remains the primary protocol retained from Sahil's handoff, using F7/Fz/P1/O2, but its payloads/results are not reproduced here. SFARI resting-state EEG (`ds006780`) is a separate workflow; KAU is out of scope. Populated manifests, raw recordings, local profiles, model bundles, and generated results are excluded from Git. The synthetic check verifies software only. See [verified progress and remaining work](docs/STATUS.md), [Tushar's completed handoff](docs/TUSHAR_HANDOFF.md), and [independent installation verification](docs/REPRODUCTION.md).
 
 ## Install and launch
 
@@ -84,6 +84,7 @@ Restart Streamlit after changing profiles. Activating a profile does not downloa
 - Feature-matched RBF-SVM, amplitude-fidelity SVM, graph-conditioned quantum kernel, and fixed edge-reassignment control.
 - Deterministic, shallow PennyLane statevector simulation. No physical quantum hardware or quantum speedup is claimed.
 - Fixed-setting stratified subject-wise cross-validation, fold AUC, out-of-fold classification metrics, and complete inference bundles.
+- Separate reproducible OOF-only Wilson/stratified-bootstrap summaries and exact paired McNemar comparisons, with explicit CV-dependence limitations; see [statistics](docs/STATISTICS.md).
 - Held-out connection-perturbation sensitivity and JSON export.
 
 This starter deliberately exposes the scientific decisions in configuration and [the method notes](docs/METHOD.md). It is not an exact reproduction of the reference paper. Changing the protocol after reviewing held-out results requires a new exploratory run and transparent reporting.

@@ -18,15 +18,23 @@ from asd_eeg.data.manifest import read_manifest
 from asd_eeg.evaluation.run_experiments import run_evaluation
 from asd_eeg.explainability.perturbation import connection_sensitivity
 from asd_eeg.features.cache import build_features, load_features
-from asd_eeg.inference.compatibility import load_bundle
+from asd_eeg.inference.artifacts import (
+    check_run_workspace,
+    load_run_bundle,
+    read_results,
+    read_run,
+    run_file,
+)
+from asd_eeg.inference.export import prediction_json
 from asd_eeg.inference.pipeline import analyze_subject
-from asd_eeg.models.quantum_circuit import circuit_text
+from asd_eeg.models.quantum_circuit import circuit_text, make_qnode
 from asd_eeg.self_check import run_self_check
 from asd_eeg.training.model import MODELS
 from asd_eeg.visualization.plots import confusion_figure, connectivity_figure, signal_figure
 from asd_eeg.workspace import check_feature_workspace, workspace_paths
 
 ROOT = Path(os.environ.get("NEUROQ_ROOT", Path(__file__).resolve().parents[1])).resolve()
+ARTIFACT_ERRORS = (OSError, ValueError, KeyError, TypeError, RuntimeError)
 PAGES = ["Workspace", "Datasets", "Analysis", "Experiments", "Team", "Software check"]
 TEAM = [
     ("Vivek G", "Quantum models", "models/, training/", "Validate circuits, kernels, and saved model bundles."),
@@ -71,7 +79,17 @@ hr { border-color: var(--rule); }
 
 
 def local_path(value: str) -> Path:
+    if not value.strip():
+        raise ValueError("Local artifact paths must not be blank.")
     return (ROOT / value).resolve()
+
+
+def display_path(path: Path) -> str:
+    """Keep routine demo captions portable, without exposing personal home paths."""
+    try:
+        return path.relative_to(ROOT).as_posix()
+    except ValueError:
+        return f"{path.name} (external local file)"
 
 
 def navigate(page: str) -> None:
@@ -85,23 +103,41 @@ def heading(title: str, description: str) -> None:
 
 
 def show_figure(fig, filename: str | None = None) -> None:
-    st.pyplot(fig, width="stretch")
-    if filename:
-        buffer = io.BytesIO()
-        fig.savefig(buffer, format="png", dpi=160, bbox_inches="tight")
-        st.download_button("Download figure", buffer.getvalue(), filename, "image/png", key=filename)
-    plt.close(fig)
+    try:
+        st.pyplot(fig, width="stretch")
+        if filename:
+            buffer = io.BytesIO()
+            fig.savefig(buffer, format="png", dpi=160, bbox_inches="tight")
+            st.download_button("Download figure", buffer.getvalue(), filename, "image/png", key=filename)
+    finally:
+        plt.close(fig)
 
 
 def completed_runs() -> list[tuple[Path, dict]]:
     runs = []
-    for path in sorted(local_path(PATHS["results"]).glob("run-*/summary.json"), reverse=True):
+    unavailable = []
+    table, error = manifest_state()
+    if table is None:
+        return runs
+    for path in sorted(results_path.glob("run-*/summary.json"), reverse=True):
         try:
             summary = json.loads(path.read_text(encoding="utf-8"))
-            if summary.get("status") == "complete" and summary.get("data_kind") == "recorded":
-                runs.append((path.parent, summary))
-        except (OSError, ValueError):
-            continue
+            if not isinstance(summary, dict):
+                raise ValueError("Saved run summary must be a JSON object.")
+            if summary.get("status") != "complete" or summary.get("data_kind") != "recorded":
+                continue
+            if path.parent.resolve().parent != results_path:
+                raise ValueError("Saved run folder is outside the selected results directory.")
+            summary, folds = read_run(path.parent)
+            check_run_workspace(summary, folds, table, config, path.parent,
+                                provenance_root=ROOT / "artifacts")
+            runs.append((path.parent, summary))
+        except ARTIFACT_ERRORS as exc:
+            unavailable.append({"Run": path.parent.name, "Reason": str(exc)})
+    if unavailable:
+        with st.expander(f"Unavailable saved runs ({len(unavailable)})"):
+            st.write("Only complete recorded-data runs matching this workspace are selectable. Restore missing artifacts or activate the matching workspace; failed runs are never displayed as results.")
+            st.dataframe(pd.DataFrame(unavailable), hide_index=True, width="stretch")
     return runs
 
 
@@ -124,15 +160,17 @@ with st.sidebar:
         st.text_input("Manifest CSV", PATHS["manifest"], key="manifest_path")
         st.text_input("Pipeline configuration", PATHS["config"], key="config_path")
         st.text_input("Feature archive", PATHS["features"], key="features_path")
+        st.text_input("Results directory", PATHS["results"], key="results_path")
     st.caption("Group 8 · Course project")
 
-manifest_path = local_path(st.session_state["manifest_path"])
-feature_path = local_path(st.session_state["features_path"])
 try:
+    manifest_path = local_path(st.session_state["manifest_path"])
+    feature_path = local_path(st.session_state["features_path"])
+    results_path = local_path(st.session_state["results_path"])
     config = load_config(local_path(st.session_state["config_path"]))
 except (OSError, ValueError, KeyError, TypeError) as exc:
-    st.error(f"Could not read the pipeline configuration: {exc}")
-    st.write("Correct the configuration path under Local paths, then reload.")
+    st.error(f"Could not read the local workspace settings: {exc}")
+    st.write("Correct the paths under Local paths, then reload.")
     st.stop()
 
 
@@ -163,6 +201,7 @@ def workspace_page() -> None:
         st.subheader("Current configuration")
         st.write(f"**{len(config.nodes)} EEG nodes · {config.n_features} subject features**")
         st.write(f"{config.circuit.passes} encoding passes, exact statevector simulation.")
+        st.caption(f"Configuration {config.id} · at most {config.preprocessing.max_windows} feature-valid windows per subject, {config.preprocessing.window_seconds:g} seconds each.")
         st.caption("Node mapping must match the verified dataset before evaluation.")
         st.dataframe(pd.DataFrame([{"Node": n.name, "Channels": ", ".join(n.channels)} for n in config.nodes]),
                      hide_index=True, width="stretch")
@@ -180,7 +219,7 @@ def workspace_page() -> None:
 
 def datasets_page() -> None:
     heading("Datasets", "Connect verified recordings and inspect their signal before building features.")
-    st.caption(f"Manifest: {manifest_path}")
+    st.caption(f"Manifest: {display_path(manifest_path)}")
     table, error = manifest_state()
     if table is None:
         st.subheader("Add your recording manifest")
@@ -206,13 +245,13 @@ def datasets_page() -> None:
                 st.write(f"**{recording.sfreq:g} Hz** · **{len(recording.channels)} channels** · "
                          f"**{recording.data.shape[1] / recording.sfreq:.1f} seconds**")
                 st.caption("Raw signal preview. Preprocessing and quality checks run during feature extraction.")
-                show_figure(signal_figure(recording))
+                show_figure(signal_figure(recording), "signal-preview.png")
                 st.write("Channels: " + ", ".join(recording.channels))
-            except (OSError, ValueError) as exc:
+            except ARTIFACT_ERRORS as exc:
                 st.error(str(exc))
     with build:
         st.write("The configuration controls channel mapping, filtering, windows, and quality rules. Feature extraction stops with a clear error if a recording cannot meet them.")
-        st.caption(f"Output: {feature_path}")
+        st.caption(f"Output: {display_path(feature_path)}")
         if st.button("Build features", type="primary"):
             try:
                 with st.status("Loading and preprocessing recordings...", expanded=True) as status:
@@ -220,14 +259,13 @@ def datasets_page() -> None:
                     dataset = build_features(manifest_path, config, feature_path)
                     status.update(label="Subject features saved", state="complete", expanded=False)
                 st.success(f"Saved {dataset.X.shape[0]} subjects with {dataset.X.shape[1]} features each.")
-            except (OSError, ValueError, KeyError) as exc:
+            except ARTIFACT_ERRORS as exc:
                 st.error(str(exc))
         st.button("Open experiments", on_click=navigate, args=("Experiments",))
 
 
 def display_results(run: Path, summary: dict) -> None:
-    metrics = json.loads((run / "metrics.json").read_text(encoding="utf-8"))
-    comparison = pd.read_csv(run / "model_comparison.csv")
+    metrics, comparison = read_results(run)
     st.caption(f"{summary['dataset']} · {summary['subjects']} subjects · {summary['folds']} subject-wise folds · Seed {summary['seed']}")
     st.write(summary["protocol"] + ".")
     columns = ["model", "balanced_accuracy", "macro_f1", "sensitivity", "specificity", "mean_fold_auc"]
@@ -252,8 +290,10 @@ def display_results(run: Path, summary: dict) -> None:
         st.write(f"Run: `{summary['run_id']}`")
         st.write(f"Control subjects: {summary['class_counts']['Control']}")
         st.write(f"ASD subjects: {summary['class_counts']['ASD']}")
-        st.download_button("Download predictions", (run / "oof_predictions.csv").read_bytes(), "oof_predictions.csv", "text/csv")
-        st.download_button("Download metrics", (run / "metrics.json").read_bytes(), "metrics.json", "application/json")
+        st.download_button("Download predictions", run_file(run, "oof_predictions.csv").read_bytes(), "oof_predictions.csv", "text/csv")
+        st.download_button("Download metrics", run_file(run, "metrics.json").read_bytes(), "metrics.json", "application/json")
+        st.download_button("Download folds", run_file(run, "folds.csv").read_bytes(), "folds.csv", "text/csv")
+        st.download_button("Download run configuration", run_file(run, "config.json").read_bytes(), "config.json", "application/json")
 
 
 def experiments_page() -> None:
@@ -269,7 +309,7 @@ def experiments_page() -> None:
             st.caption(f"Feature archive: {len(dataset.y)} subjects · {dataset.X.shape[1]} features · {dataset.metadata['dataset']}")
             if not ready:
                 st.info("Use Software check for synthetic inputs. This page displays recorded-data experiments.")
-        except (OSError, ValueError, KeyError) as exc:
+        except ARTIFACT_ERRORS as exc:
             st.error(str(exc))
     else:
         st.write("Build a subject feature archive from Datasets to enable evaluation.")
@@ -277,9 +317,9 @@ def experiments_page() -> None:
         try:
             with st.status("Evaluating subject-wise folds...", expanded=True) as status:
                 st.write("Fitting the RBF, amplitude, quantum, and reassigned-connection models.")
-                run_evaluation(dataset, local_path(PATHS["results"]))
+                run_evaluation(dataset, results_path)
                 status.update(label="Experiment saved", state="complete", expanded=False)
-        except (OSError, ValueError, RuntimeError) as exc:
+        except ARTIFACT_ERRORS as exc:
             st.error(str(exc))
     st.divider()
     st.subheader("Saved results")
@@ -288,7 +328,11 @@ def experiments_page() -> None:
         st.write("No completed recorded-data experiments yet. Results appear here after evaluation succeeds.")
         return
     index = st.selectbox("Experiment run", range(len(runs)), format_func=lambda i: runs[i][0].name)
-    display_results(*runs[index])
+    try:
+        display_results(*runs[index])
+    except ARTIFACT_ERRORS as exc:
+        st.error(f"Could not display this saved run: {exc}")
+        st.write("Restore the run's original result files. No replacement scores are inferred.")
 
 
 def analysis_page() -> None:
@@ -301,34 +345,60 @@ def analysis_page() -> None:
         return
     index = st.selectbox("Experiment", range(len(runs)), format_func=lambda i: runs[i][0].name)
     run, summary = runs[index]
-    folds = pd.read_csv(run / "folds.csv", dtype={"subject_id": str})
+    try:
+        summary, folds = read_run(run)
+        table, error = manifest_state()
+        if table is None:
+            raise ValueError(error)
+        check_run_workspace(summary, folds, table, config, run,
+                            provenance_root=ROOT / "artifacts")
+    except ARTIFACT_ERRORS as exc:
+        st.error(f"Could not read this run's held-out subjects: {exc}")
+        return
     left, right = st.columns(2)
     with left:
         subject = st.selectbox("Held-out subject", folds.subject_id.tolist())
     with right:
         model_name = st.selectbox("Model", list(MODELS), index=2, format_func=MODELS.get)
     fold = int(folds[folds.subject_id == subject].iloc[0].fold)
-    bundle_path = run / f"fold_{fold}" / f"{model_name}.joblib"
+    try:
+        bundle_path = run_file(run, f"fold_{fold}/{model_name}.joblib")
+        signature = tuple((str(path), path.stat().st_mtime_ns, path.stat().st_size)
+                          for path in (manifest_path, bundle_path, run_file(run, "folds.csv")))
+    except ARTIFACT_ERRORS as exc:
+        st.error(f"The selected fold model is unavailable: {exc}")
+        st.write("Restore the complete fold bundle from this run. Do not substitute another fold.")
+        return
     st.caption(f"Uses fold {fold + 1}. The saved pipeline settings and training-reference order are restored automatically.")
-    key = (str(manifest_path), str(bundle_path), subject)
+    st.caption("Only trusted local project-generated bundles are restored. Decision scores are not calibrated probabilities or clinical diagnoses.")
+    key = (signature, subject)
     if st.button("Analyze subject", type="primary"):
+        st.session_state.pop("analysis", None)
+        st.session_state.pop("sensitivity", None)
+        st.session_state.pop("circuit_image", None)
         try:
             with st.status("Processing the held-out recording...", expanded=True) as status:
                 st.write("Applying the saved pipeline and checking subject provenance.")
+                load_run_bundle(run, fold, model_name)
                 result = analyze_subject(manifest_path, subject, bundle_path)
                 status.update(label="Analysis complete", state="complete", expanded=False)
             st.session_state["analysis"] = (key, result)
-        except (OSError, ValueError, KeyError, RuntimeError) as exc:
+        except ARTIFACT_ERRORS as exc:
             st.error(str(exc))
     cached = st.session_state.get("analysis")
     if not cached or cached[0] != key:
         return
     result = cached[1]
-    bundle = load_bundle(bundle_path)
+    try:
+        _, bundle = load_run_bundle(run, fold, model_name)
+    except ARTIFACT_ERRORS as exc:
+        st.session_state.pop("analysis", None)
+        st.error(f"Could not restore this analysis model: {exc}")
+        return
     st.divider()
     st.subheader(f"Prediction: {result['predicted_class']}")
     st.write(f"Decision score: **{result['decision_score']:.4f}**. Positive favors ASD; negative favors Control.")
-    st.caption(f"{result['window_count']} accepted windows · {result['processing_seconds']:.2f} seconds · Held-out subject verified")
+    st.caption(f"{result['window_count']} windows used from {result['accepted_window_count']} feature-valid windows · {result['processing_seconds']:.2f} seconds · Held-out subject verified")
     verified = int(folds[folds.subject_id == subject].iloc[0].label)
     st.write(f"Verified dataset label: **{'ASD' if verified else 'Control'}**")
     graph_tab, circuit_tab, explanation_tab, details_tab = st.tabs(["Connectivity", "Circuit", "Sensitivity", "Record"])
@@ -340,19 +410,55 @@ def analysis_page() -> None:
             angles = bundle["model"].angles(np.array(result["feature_vector"])[None, :])[0]
             st.code(circuit_text(angles, bundle["model"].config), language="text")
             st.caption("Actual gate angles for this subject. Rotations encode activity; IsingZZ gates encode connections.")
+            if st.button("Draw saved circuit"):
+                st.session_state.pop("circuit_image", None)
+                try:
+                    import pennylane as qml
+                    fig, _ = qml.draw_mpl(make_qnode(bundle["model"].config), decimals=2)(angles)
+                    buffer = io.BytesIO()
+                    try:
+                        fig.savefig(buffer, format="png", dpi=160, bbox_inches="tight")
+                    finally:
+                        plt.close(fig)
+                    st.session_state["circuit_image"] = (key, buffer.getvalue())
+                except ARTIFACT_ERRORS as exc:
+                    st.error(f"Could not draw the saved circuit: {exc}")
+            circuit = st.session_state.get("circuit_image")
+            if circuit and circuit[0] == key:
+                st.image(circuit[1], caption="Actual subject-specific saved quantum circuit", width="stretch")
+                st.download_button("Download circuit figure", circuit[1], "quantum-circuit.png", "image/png")
         else:
             st.write("Select Connectivity quantum kernel to inspect its subject-specific circuit.")
     with explanation_tab:
         st.write("Replace each connection's median and variability with the training subjects' reference values, then measure the change in the decision score.")
         if st.button("Compute connection sensitivity"):
-            sensitivity = connection_sensitivity(bundle, np.array(result["feature_vector"]))
-            frame = pd.DataFrame(sensitivity)
+            st.session_state.pop("sensitivity", None)
+            try:
+                sensitivity = connection_sensitivity(bundle, np.array(result["feature_vector"]))
+                prediction_json({"connection_sensitivity": sensitivity})
+                st.session_state["sensitivity"] = (key, sensitivity)
+            except ARTIFACT_ERRORS as exc:
+                st.error(f"Could not compute connection sensitivity: {exc}")
+        sensitivity = st.session_state.get("sensitivity")
+        if sensitivity and sensitivity[0] == key:
+            frame = pd.DataFrame(sensitivity[1])
             st.dataframe(frame, hide_index=True, width="stretch")
-            st.bar_chart(frame.set_index("connection")[["score_change"]], horizontal=True, color="#335e83")
+            fig, ax = plt.subplots(figsize=(8, 3.8))
+            ax.barh(frame.connection, frame.score_change, color="#335e83")
+            ax.axvline(0, color="#526273", linewidth=1)
+            ax.set_xlabel("Decision score change (perturbed minus original)")
+            ax.set_title("Training-reference connection sensitivity")
+            fig.tight_layout()
+            show_figure(fig, "connection-sensitivity.png")
             st.caption("This describes model sensitivity to a feature change, not a causal explanation of autism.")
+            st.download_button("Download sensitivity table", frame.to_csv(index=False), "connection-sensitivity.csv", "text/csv")
     with details_tab:
         st.json({k: v for k, v in result.items() if k not in {"feature_vector", "connectivity"}})
-    st.download_button("Export analysis JSON", json.dumps(result, indent=2), "prediction.json", "application/json")
+    exported = dict(result)
+    if sensitivity and sensitivity[0] == key:
+        exported["connection_sensitivity"] = sensitivity[1]
+        exported["sensitivity_reference"] = "Training-fold feature medians; no refitting"
+    st.download_button("Export analysis JSON", prediction_json(exported), "prediction.json", "application/json")
 
 
 def team_page() -> None:
@@ -381,13 +487,13 @@ def software_page() -> None:
                 st.write("Generating signals, extracting features, evaluating folds, and reloading inference.")
                 st.session_state["software_check"] = run_self_check(config, ROOT / "artifacts/software-check")
                 status.update(label="Software check passed", state="complete", expanded=False)
-        except (OSError, ValueError, RuntimeError, KeyError) as exc:
+        except ARTIFACT_ERRORS as exc:
             st.error(str(exc))
     result = st.session_state.get("software_check")
     if result:
         st.success("Feature extraction, four-model evaluation, and held-out inference completed.")
         st.json(result)
-        st.download_button("Download check record", json.dumps(result, indent=2), "software-check.json", "application/json")
+        st.download_button("Download check record", prediction_json(result), "software-check.json", "application/json")
     st.subheader("Run it from the terminal")
     st.code("neuroq self-check", language="shell")
 

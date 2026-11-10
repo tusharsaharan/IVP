@@ -134,7 +134,9 @@ def test_invalid_split_inputs_are_rejected(problem):
 
 def test_source_commit_is_independent_of_caller_directory(monkeypatch, tmp_path):
     expected = run_experiments.git_commit()
-    assert len(expected) == 40
+    # Source archives/wheels intentionally omit .git and must report unknown,
+    # rather than borrowing a commit from the caller's current directory.
+    assert expected == "unknown" or (len(expected) == 40 and set(expected) <= set("0123456789abcdef"))
     monkeypatch.chdir(tmp_path)
     assert run_experiments.git_commit() == expected
 

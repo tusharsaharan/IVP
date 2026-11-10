@@ -66,6 +66,9 @@ def run_evaluation(dataset: FeatureDataset, output: str | Path) -> Path:
         "subjects": len(dataset.y), "class_counts": {"Control": int(counts[0]), "ASD": int(counts[1])},
         "folds": folds, "requested_folds": config.evaluation.folds, "seed": config.evaluation.seed,
         "config_id": config.id, "feature_fingerprint": digest,
+        # Freeze all input-session quality records, not just the capped window IDs.
+        # JSON round-tripping mirrors the archive contract and avoids mutable aliases.
+        "feature_metadata": json.loads(json.dumps(dataset.metadata)),
         "protocol": "Fixed settings; stratified subject-wise cross-validation; no hyperparameter search",
         "versions": versions, "git_commit": git_commit(),
     }

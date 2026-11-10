@@ -1,9 +1,10 @@
 # Integration audit and remaining work
 
-**Audit date:** November 10, 2026. **Conclusion:** the software modules are integrated
-and tested; the recorded-data results and final submission are not yet verified.
-Reported experiments on a teammate's machine are not assumed absent everywhere,
-but their supporting artifacts were not available for this audit.
+**Updated:** November 10, 2026. **Conclusion:** modules are integrated; Tushar's
+unchanged local SFARI experiment and real held-out CLI/app workflow are reproduced.
+All models have accuracy 46–50%, below the 60% majority-class baseline; no quantum
+advantage or clinical utility is established. Source/QC owner approval and unavailable
+TUOS evidence remain open. Inherited teammate metrics remain unverified.
 
 ## Branch review
 
@@ -22,6 +23,11 @@ was present; their assigned responsibilities still need acceptance review.
 Integration preserves merge ancestry and all feature branch tips; no force-push,
 branch deletion, or history rewriting is required.
 
+The merge `ec87cfb5b982cc88b858fbf9bb5c5ac7839553e8` was pushed to `main`;
+PR #5 is merged. Its Windows/Ubuntu CI completed successfully:
+<https://github.com/tusharsaharan/IVP/actions/runs/42756207107>.
+That CI result applies to the merge, not automatically to later sprint edits.
+
 ## Verified implementation
 
 - One CLI/Streamlit inference function and the same evaluation runner.
@@ -39,7 +45,7 @@ branch deletion, or history rewriting is required.
   derived edge sensitivity, plots, and JSON export.
 - Empty-workspace Streamlit navigation and the labelled synthetic end-to-end check.
 
-### Validation on the integrated tree
+### Initial merge validation (historical baseline)
 
 - Windows, Python **3.13.9**: **244 tests passed**.
 - `python -m ruff check .`: clean.
@@ -51,10 +57,52 @@ branch deletion, or history rewriting is required.
 - Existing active recorded feature archive: loaded and validated against its manifest
   and configuration after integration; existing workspace/profile was not modified.
 
-These checks are not clinical validation, a full clean-environment installation, or
-cross-platform results. CI is configured for Python 3.13 on Windows and Ubuntu;
-confirm the new merge's workflow results separately. Python 3.11/3.12 installation
-and the extracted submission archive still need explicit reproduction.
+These initial checks were not fresh dependency installation or clinical validation.
+The sprint below adds fresh-install and recorded checks; Python 3.11/3.12 and
+independent cross-platform reproduction remain untested.
+
+### Completion-sprint verification
+
+- Windows/Python 3.13.9 after review fixes: **582 passed, 1 skipped**; Ruff clean. The skip requires
+  Windows symlink creation privileges.
+- Safe app run/bundle selection validates cohort/configuration and OOF metrics;
+  damaged artifacts fail clearly. CLI/app keep the shared inference function.
+- Strict atomic JSON; score/window/feature provenance; persistent circuit/sensitivity
+  output with PNG/CSV downloads.
+- All 20 recorded bundles passed training-only scaler/reference and original
+  training-column ordering checks. Saved labels/scores match OOF.
+- A deterministic repeat matched folds, OOF labels/scores and fold AUC. Two cases
+  selected before evaluation matched raw features/labels/scores in all four models.
+  Both quantum case predictions were incorrect and remain visible in the demo.
+- Refreshed AppTest passed actual quantum inference, six finite sensitivities,
+  strict JSON and numerical-angle circuit PNG on both cases. Local report:
+  `artifacts/tushar-acceptance-20261110/integration_verification_reviewed.json`.
+- Fresh README and extracted noneditable installs passed dependencies/import/CLI and
+  synthetic checks. One installed-CLI recorded case also matched OOF using original
+  local inputs in place, without copying research data into the ZIP.
+- Initial extracted tests exposed an invalid requirement for Git metadata in a ZIP.
+  The test now accepts documented `unknown` and still checks caller-directory
+  independence. Refreshed archive evidence belongs in `REPRODUCTION.md`.
+- Post-review actual browser workflow completed with explicit workspace/run/model/case
+  selection, OOF/metrics download hash checks and prediction provenance/feature/score
+  agreement. Circuit PNG matches reviewed AppTest; six sensitivities match raw evidence.
+- The verified laptop AVI and MP4 are 1440×900, 64.17 seconds, 1,540 fully decoded
+  frames each. FFmpeg full decoding and sampled-frame inspection passed; no human or
+  native-player playback is claimed. Earlier concise/partial recordings are preserved
+  as historical local evidence, not the selected final demo.
+- Regenerate and verify the exact source-only delivery snapshot separately. Its
+  hashes, installation/test logs and package contents stay in ignored local evidence;
+  passing an earlier snapshot does not validate subsequent changes.
+
+Independent review findings were resolved without changing the saved experiment:
+public participant details removed; the private browser wrapper explicitly selects
+and verifies its run/case; full protocol/provenance comparisons run before evaluation;
+AppTest uses supplied/custom paths; whole-cohort session membership is enforced.
+New run summaries preserve optional original feature metadata. Negative tests cover
+protocol-only drift, same-name path decoys, changed/unselected sessions, missing
+provenance and mismatched embedded metadata. Legacy fixtures explicitly omit the new
+field to continue exercising original-acceptance recovery. No human-owner approval
+or raw-payload equality is inferred from session identifiers alone.
 
 ## Reconciliations included in the merge
 
@@ -92,16 +140,19 @@ and the extracted submission archive still need explicit reproduction.
 
 | Item | Observed evidence | Limit |
 | --- | --- | --- |
-| Active SFARI source | Candidate/QC manifests and local payloads | Existing source audit needs owner acceptance |
-| Active SFARI QC | 528 input recordings, 103 subjects; 448 included recordings, 100 subjects (60 ASD, 40 Control) | Different from Sahil's handoff |
-| Active SFARI features | `[100, 28]`, config `7bcd185ff8336878`, compatible cohort/recording IDs | Used windows range **3-20**, not identical duration |
+| Active SFARI source | 528 payloads and 2,116 metadata files rehashed; explicit labels/payload grouping match; no cross-subject duplicate hashes | Scientific source/QC approval remains required |
+| Active SFARI QC | Repeated 528 inputs/103 subjects to identical 448 recordings/100 subjects (60 ASD, 40 Control) | Fixed simple QC, not full clinical artifact cleaning |
+| Active SFARI features | Rebuilt raw `[100, 28]`, matches prior within 1e-10, config `7bcd185ff8336878` | **3-20** used windows, not identical duration |
 | Sahil TUOS handoff | 56 ledger rows; 45 eligible subjects (26 ASD, 19 Control) | No TUOS SET payloads in this checkout; labels/QC not reproduced |
-| Sahil SFARI handoff | 136 ledger rows; 438 recordings for 100 subjects | Private WSL paths, different dataset ID/protocol; acquisition/QC discrepancy unresolved |
-| Completed recorded experiments | **No `summary.json` under `results/`** at audit time | No available OOF/bundles to verify reported performance or run a real held-out demo |
+| Sahil SFARI handoff | 438 runs are a subset of 448, same 100 subjects/labels; ten additional runs across three subjects | Different ID/protocol; older 517-candidate omission cause/approval unresolved |
+| New recorded experiment | `run-20261110-045223-cfdc86`: complete; 400 OOF rows, five shared folds, 20 bundles; metrics regenerate | Separate Tushar 20-window experiment, not TUOS or historical Sahil metrics |
 
 Sahil's reported TUOS/SFARI metrics remain attributed historical claims in the
-handoff/method notes. No bootstrap/Wilson/McNemar implementation or supporting
-completed run was supplied here. Some reported SFARI balanced accuracies do not
+handoff/method notes. A separate validated OOF-statistics module now reports
+Wilson, stratified bootstrap and exact McNemar/Holm summaries for the new run
+(10,000 replicates, seed 42). `STATISTICS.md` explains conditional inference and
+overlapping-CV-training limitations; all six adjusted p-values are 1.0, not
+equivalence. Some inherited SFARI balanced accuracies do not
 match the stated sensitivity/specificity arithmetic. Do not print those metrics
 as verified results, infer equivalence from nonsignificance, or confuse independent
 within-cohort CV with zero-shot cross-dataset transfer. Current inference explicitly
@@ -111,18 +162,18 @@ guards dataset compatibility, and the node maps differ across cohorts.
 
 | Priority | Owner | Required next handoff / acceptance |
 | --- | --- | --- |
-| Blocking | Sahil + Tushar + Vivek | Reconcile 528/448 versus 517/438 SFARI selection/QC, source snapshot and dataset IDs; approve one final recorded cohort/protocol before evaluation. Preserve both original audits. |
+| Scientific approval | Sahil + Tushar + Vivek | Review repeated source/QC and known 438-of-448 subset; obtain older 517-candidate audit to explain omissions. Approve final protocol without retrospective score-driven changes. |
 | Blocking for TUOS | Sahil | Supply permitted TUOS SET/FDT payloads, source group definitions/label mapping, prior-cleaning notes, and a reproducible 56-to-45 exclusion audit. Create and validate local paths; do not infer labels from numbering/prefixes alone. |
-| Blocking | Aryan + Sahil | Reproduce final archive/schema/graphs and reconcile manifest/subject/session/window counts. State variable duration, or prospectively define and document a new equal-duration protocol without tuning against held-out scores. |
-| Blocking | Mahavir + Vivek | Supply or run a complete four-model recorded-data evaluation on identical frozen folds; retain configuration/source IDs, OOF predictions, fold AUC, versions, timing, and trusted fold bundles. Regenerate every reported metric from OOF. |
-| High | Mahavir + Pranav | Supply reproducible statistical scripts and seeds/replicate counts if confidence intervals or paired tests will be reported; otherwise remove unsupported claims from final submissions. |
+| Owner review | Aryan + Sahil | Review reproduced archive/schema/graphs and documented variable 3–20 windows. Equal duration would require a new experiment. |
+| Owner review | Mahavir + Vivek | Review completed frozen four-model run and passing bundle/OOF checks; do not adopt unavailable historical metrics. |
+| Implemented; interpretation review | Mahavir + Pranav | OOF statistics/seeds/replicates are complete; retain CV-dependence caveats and do not infer equivalence from p=1.0. |
 | High | Vivek | Review actual circuit/encoding, PSD/equivalence/reassignment mathematics, train-reference ordering, and write the model section distinguishing this adaptation from the source paper. |
-| High | Tushar + Shivam | Run a real held-out subject through both CLI and app, compare to saved OOF prediction, export actual circuit/connectivity/confusion/sensitivity figures and a case study with fold/run/config provenance. |
-| Blocking for submission | Pranav + all section owners | Update report/PPT/SRS to the implemented method and verified cohort/results; record and verify a playable AVI, then extract the submission archive and reproduce installation/demo independently. |
+| Software handoff complete | Tushar + Shivam | Real raw-input CLI/app/OOF agreement, figures, JSON and sensitivity verified. Review captions/limits for presentation. |
+| Content approval / delivery verification | Pranav + all owners | Revised Word/PPT/PDF copies describe implemented method and honest results. Laptop AVI decoding passed; source-snapshot/package hashes and extracted checks are tracked locally. Faculty/team approval remains required; no clinical/final-cohort approval implied. |
 
 ## Submission-material mismatch
 
-Local files outside Git were inspected for content, not edited:
+The original files outside Git were preserved unchanged:
 
 - `PPT(in pptx formate)/ASD_EEG_Diagnosis_Group8_v5 (1).pptx`: 31-slide
   literature/design presentation still centered on KAU, CNN-LSTM, Grad-CAM, and
@@ -135,9 +186,20 @@ Local files outside Git were inspected for content, not edited:
   claims no experimental results and is not the final results paper.
 - Literature-survey workbooks and research-paper folders exist, but their full
   contents/citations were not re-audited in this integration.
-- The demo AVI folder has **no file**; no final submission archive was identified
-  in the submission-material folders inspected.
+- The demo AVI folder was empty at the initial merge audit; current completion
+  evidence does not inherit that historical observation.
 
 Preserve old proposals as historical work if needed, but submit revised documents
 with the actual four-model method, limitations, source/config/run IDs, and verified
 results. Existing paper accuracies must never be attributed to this implementation.
+
+New revision-suffixed local copies (original authors/course title retained):
+
+- `SRS and Design Report/ASD_EEG_SRS_Design_Implementation_Revised_20261110.docx`
+- `PPT(in pptx formate)/ASD_EEG_Group8_Implementation_Revised_20261110.pptx`
+- `Report (Springer Format)/ASD_EEG_Implementation_SpringerStyle_Revised_20261110.pdf`
+
+These report the new SFARI method/results and conditional uncertainty. Native
+Word/PowerPoint rendering and PDF inspection are local submission QA. The PDF is
+**Springer-style**, not claimed to meet an official publisher template. Final
+artifact hashes and package contents stay in ignored evidence; see `TUSHAR_HANDOFF.md`.

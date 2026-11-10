@@ -22,7 +22,8 @@ def parser() -> argparse.ArgumentParser:
     predict = commands.add_parser("predict", help="Analyze one held-out or explicitly new subject")
     predict.add_argument("--manifest", default=paths["manifest"])
     predict.add_argument("--subject", required=True)
-    predict.add_argument("--bundle", required=True)
+    predict.add_argument("--bundle", required=True,
+                         help="Trusted local project-generated joblib bundle only; never use uploaded files")
     predict.add_argument("--output", default="artifacts/prediction.json")
     predict.add_argument("--allow-new-subject", action="store_true")
     check = commands.add_parser("self-check", help="Run a labelled synthetic software check")
@@ -91,7 +92,7 @@ def main(argv=None) -> int:
             result = run_self_check(load_config(args.config), args.output)
         print(json.dumps(result, indent=2, allow_nan=False))
         return 0
-    except (OSError, ValueError, KeyError, RuntimeError) as exc:
+    except (OSError, ValueError, KeyError, RuntimeError, TypeError) as exc:
         print(f"Error: {exc}", file=sys.stderr)
         return 1
 

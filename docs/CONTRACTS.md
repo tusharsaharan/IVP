@@ -79,4 +79,14 @@ Inference uses the bundle configuration, verifies the dataset, and blocks traini
 
 A run is usable only when `summary.json` has `status: complete`. Failed runs preserve their error and are not displayed as results. Each subject has one out-of-fold prediction per model. `folds.csv` assigns each subject to its test fold. AUC is computed per fold and then averaged because SVM margins from separate models need not share a scale.
 
+Saved-run reproduction must match **every subject's complete input recording-session
+membership**, not only subjects/labels or capped window IDs. New summaries may retain
+the original archive metadata as optional `feature_metadata`; this is local research
+evidence, never a public source file. An older summary without it requires its original
+completed acceptance evidence and SHA-256-bound feature archive, with matching run ID,
+configuration, fingerprint, cohort and labels. The current mutable workspace archive
+is not a substitute. Missing/partial session provenance fails closed in the application;
+legacy numeric feature archives remain readable for existing standalone workflows.
+This additive provenance does not change bundle schema 1 or any numerical protocol.
+
 `make_subject_folds` validates one nonempty string ID and an explicit binary label per subject, and generates partitions once for all models. `summarize_oof` requires subject IDs, fold indices, models, true/predicted labels, and finite decision scores. It rejects duplicate subject/model rows, conflicting labels, or differing cohort/fold assignments. All classification metrics and the mean, population standard deviation, and defined-fold count for AUC regenerate from `oof_predictions.csv`; wall-clock runtime does not. Undefined single-class fold AUCs are blank in CSV and excluded from summaries. The run records the source checkout commit, or `unknown` for installations without Git metadata.
