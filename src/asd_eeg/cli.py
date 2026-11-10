@@ -3,11 +3,11 @@ import json
 import sys
 from pathlib import Path
 
-from asd_eeg.workspace import workspace_paths
+from asd_eeg.workspace import DEFAULT_PATHS, workspace_paths
 
 
-def parser() -> argparse.ArgumentParser:
-    paths = workspace_paths(Path.cwd())
+def parser(*, use_workspace: bool = True) -> argparse.ArgumentParser:
+    paths = workspace_paths(Path.cwd()) if use_workspace else DEFAULT_PATHS.copy()
     root = argparse.ArgumentParser(prog="neuroq", description="NeuroQ-Connect research commands")
     commands = root.add_subparsers(dest="command", required=True)
     validate = commands.add_parser("validate", help="Validate paths, subject IDs, and explicit labels")
@@ -48,7 +48,12 @@ def parser() -> argparse.ArgumentParser:
 
 def main(argv=None) -> int:
     try:
-        args = parser().parse_args(argv)
+        # Parse help and recovery commands before consulting a possibly damaged
+        # profile. Data commands still require valid active-workspace defaults;
+        # explicitly supplied arguments retain precedence on the second parse.
+        args = parser(use_workspace=False).parse_args(argv)
+        if args.command in {"validate", "features", "evaluate", "predict", "screen"}:
+            args = parser().parse_args(argv)
         if args.command == "validate":
             from asd_eeg.data.manifest import read_manifest
             table = read_manifest(args.manifest)

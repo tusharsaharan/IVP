@@ -75,6 +75,19 @@ neuroq use-workspace --manifest data/local/tuos/recordings.csv --config configs/
 
 Restart Streamlit after changing profiles. Activating a profile does not download recordings or train models.
 
+### Recover a damaged workspace profile
+
+`neuroq --help`, subcommand help, `neuroq self-check`, `prepare-sfari`, and
+`use-workspace` do not require a readable `data/local/workspace.json`. If that local
+profile is damaged, rerun `neuroq use-workspace` with the verified manifest,
+configuration, feature and results paths for your chosen dataset, then restart
+Streamlit. Activation validates the manifest/configuration before atomically replacing
+the profile; a failed save leaves the previous file intact. Blank paths are rejected.
+
+Data commands (`validate`, `features`, `evaluate`, `predict`, `screen`) still reject
+an invalid active profile rather than silently falling back to another dataset.
+Explicit command-line paths continue to override defaults when the profile is valid.
+
 ## Implemented baseline protocol
 
 - Continuous NPZ, EEGLAB SET, EDF, BDF, and FIF readers. SET companion files must remain alongside their recording.
@@ -110,7 +123,12 @@ python -m pytest
 python -m ruff check .
 ```
 
-GitHub Actions runs both checks on pushes and pull requests. Tests cover quantum-kernel mathematics, manifest integrity, feature extraction, subject isolation, artifact compatibility, CLI, and application startup.
+GitHub Actions is configured to run both checks on Windows and Ubuntu with Python
+3.11, 3.12 and 3.13, plus dependency checks, CLI help and the explicitly synthetic
+end-to-end software check. Tests cover quantum-kernel mathematics, manifest integrity,
+feature extraction, subject isolation, artifact compatibility, workspace recovery,
+CLI, and application startup. Cross-platform software CI does not reproduce the
+private recorded experiment.
 
 ## Reference
 

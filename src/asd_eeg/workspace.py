@@ -1,6 +1,8 @@
 """Shared local artifact paths for the command line and Streamlit application."""
 
 import json
+import os
+import tempfile
 from pathlib import Path
 
 import numpy as np
@@ -41,7 +43,11 @@ def workspace_paths(root: str | Path) -> dict[str, str]:
     profile = root / PROFILE
     if not profile.is_file():
         return DEFAULT_PATHS.copy()
-    values = json.loads(profile.read_text(encoding="utf-8"))
+    try:
+        values = json.loads(profile.read_text(encoding="utf-8"))
+    except (OSError, ValueError) as exc:
+        raise ValueError("Could not read the local workspace profile. Run neuroq use-workspace "
+                         "with verified paths to repair it.") from exc
     if not isinstance(values, dict) or set(values) != set(DEFAULT_PATHS):
         raise ValueError("The local workspace profile needs manifest, config, features, and results.")
     if any(not isinstance(value, str) or not value.strip() for value in values.values()):
@@ -53,6 +59,8 @@ def activate_workspace(root: str | Path, manifest: str | Path, config: str | Pat
                        features: str | Path, results: str | Path) -> dict:
     root = Path(root).resolve()
     paths = {"manifest": manifest, "config": config, "features": features, "results": results}
+    if any(not isinstance(value, (str, Path)) or not str(value).strip() for value in paths.values()):
+        raise ValueError("Local workspace paths must be nonempty strings or paths.")
     resolved = {name: (root / value).resolve() for name, value in paths.items()}
     table = read_manifest(resolved["manifest"])
     if table.data_kind.iloc[0] != "recorded":
@@ -61,6 +69,16 @@ def activate_workspace(root: str | Path, manifest: str | Path, config: str | Pat
     values = {name: relative_or_absolute(value, root)
               for name, value in resolved.items()}
     profile = root / PROFILE
+    payload = json.dumps(values, indent=2, ensure_ascii=False, allow_nan=False)
     profile.parent.mkdir(parents=True, exist_ok=True)
-    profile.write_text(json.dumps(values, indent=2), encoding="utf-8")
+    temporary = None
+    try:
+        with tempfile.NamedTemporaryFile(mode="w", encoding="utf-8", dir=profile.parent,
+                                         prefix=f".{profile.name}.", suffix=".tmp", delete=False) as handle:
+            temporary = Path(handle.name)
+            handle.write(payload)
+        os.replace(temporary, profile)
+    finally:
+        if temporary is not None:
+            temporary.unlink(missing_ok=True)
     return {"profile": str(profile), "paths": values}

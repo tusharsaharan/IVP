@@ -104,6 +104,23 @@ provenance and mismatched embedded metadata. Legacy fixtures explicitly omit the
 field to continue exercising original-acceptance recovery. No human-owner approval
 or raw-payload equality is inferred from session identifiers alone.
 
+### Project-only follow-up: workspace recovery
+
+- Windows/Python 3.13.9: **615 tests passed, 1 skipped** in 44.19 seconds; Ruff and
+  `pip check` passed. The explicitly synthetic end-to-end self-check also passed.
+- Added 33 isolated regression cases for CLI help/recovery with malformed profiles,
+  fail-closed data commands, valid-default/explicit-path precedence, blank paths,
+  invalid activation inputs, and failed atomic saves with temporary-file cleanup.
+- `use-workspace` can now repair a damaged profile without first reading it.
+  Profile activation validates inputs before atomic replacement; no silent dataset
+  fallback is introduced into data commands.
+- CI is configured for Windows/Ubuntu on Python 3.11, 3.12 and 3.13, including
+  dependency checks, CLI help and a synthetic end-to-end self-check. Results of an
+  earlier CI run do not automatically validate this expanded matrix or later code.
+- Numerical settings, shared inference, subject grouping, labels, feature/reference
+  order, bundles and the frozen recorded experiment are unchanged. Outstanding
+  dataset evidence and scientific owner approvals remain listed below.
+
 ## Reconciliations included in the merge
 
 1. Preserved TUOS defaults and **both** SFARI window protocols without silently

@@ -226,6 +226,19 @@ change; source/run provenance remains attributed to its original creation.
 
 Connection sensitivity replaces the median and IQR of one edge with raw-feature medians from that model's training subjects and recomputes its decision score. This is an input perturbation check; correlated-feature changes can be off-distribution. It is not a causal biomarker.
 
+## Project-only workspace recovery follow-up (November 10, 2026)
+
+CLI help and workspace-independent commands now parse before reading the local
+profile, so `use-workspace` can repair a malformed profile. Data commands remain
+fail-closed, and valid-profile defaults retain explicit argument precedence.
+Activation rejects blank paths, validates recorded-data inputs/configuration, and
+atomically saves the same four-field local profile. Failed validation or replacement
+preserves previous settings. These are integration/recovery safeguards only:
+no node map, filtering, feature definition/order, quantum circuit, classifier,
+fold, seed, bundle schema, diagnosis label, or frozen recorded result changed.
+The expanded CI matrix and self-check exercise software using generated fixtures;
+they do not reproduce private recordings or resolve scientific owner approval.
+
 ## Reference and distinction
 
 Saranya and Menaka (2025), IEEE Access, DOI: 10.1109/ACCESS.2025.3531979. Their paper uses wavelet/filter-bank CSP and engineered features from a private 20-child cohort. The current regional-envelope graph representation and circuit are an adaptation. Their reported accuracy must never be attributed to this code or another dataset. The proposed contribution is a controlled investigation of graph-conditioned encoding, with novelty and benefit to be assessed empirically.
