@@ -82,9 +82,9 @@ This starter deliberately exposes the scientific decisions in configuration and 
 | Aryan Pandey | `features/` | Feature matrix, feature schema, graph summaries |
 | Tushar Saharan | `inference/`, `app/`, CLI | Shared pipeline, application and exports |
 | Shivam Mall | `explainability/`, `visualization/` | Sensitivity checks, scientific plots and captions |
-| Pranav Karhale | `tests/`, `docs/` | Reproducibility, report/PPT/AVI and submission checks |
+| Pranav Karhale | `tests/`, `docs/` | Reproducibility ([guide](docs/reproducibility.md)), demonstration ([script](docs/demo_script.md)), report/PPT/AVI and submission checks |
 
-Paths above are relative to `src/asd_eeg/` where applicable. See [team handoffs](docs/TEAM.md), [contracts](docs/CONTRACTS.md), and [contribution instructions](CONTRIBUTING.md).
+Paths above are relative to `src/asd_eeg/` where applicable. See [team handoffs](docs/TEAM.md), [contracts](docs/CONTRACTS.md), [reproducibility guide](docs/reproducibility.md), [demonstration script](docs/demo_script.md), and [contribution instructions](CONTRIBUTING.md).
 
 ## Verify a change
 
