@@ -2,6 +2,9 @@
 
 All modules already have a working starting implementation. Extend and validate them rather than creating incompatible parallel pipelines. Tushar owns integration; Vivek coordinates model and interface decisions. Read `CONTRACTS.md` before editing.
 
+The **Done** lines below define each handoff's acceptance criteria, not proof that
+all research/submission work is complete. See `STATUS.md` for the November 10 audit.
+
 ## Vivek G: quantum method
 
 **Own:** `src/asd_eeg/models/`, `src/asd_eeg/training/`.
@@ -19,7 +22,7 @@ All modules already have a working starting implementation. Extend and validate 
 **Own:** `data/metadata/recordings.csv`, `src/asd_eeg/data/`, `src/asd_eeg/preprocessing/`, preprocessing/channel configuration.
 
 - First handoff: one readable recording, electrode metadata, and an authoritative label source.
-- The primary dataset is SFARI resting-state EEG (`ds006780`), selected with Tushar. KAU is out of scope. Review the acquisition/QC handoff in `SFARI.md`, verify explicit ASD/TD labels, and reconcile the included cohort with its exclusion ledger.
+- The primary protocol is TUOS, retained from Sahil's handoff. Obtain permitted payloads and the source-based label/exclusion evidence before reproduction; keep populated manifests/ledgers local. Review `README_SAHIL.md` and `METHOD.md`. SFARI is separate through `SFARI.md`; reconcile the reported 438-run handoff with the existing 448-run local audit before choosing the final cohort. KAU is out of scope.
 - Check subjects versus sessions, references, conditions, sampling rates, companion files, and downloaded payloads.
 - Populate the manifest and explicit exclusions. The starter stops on unusable recordings rather than silently removing them.
 - Adapt preprocessing/QC to the real data and document any prior cleaning.
@@ -42,7 +45,7 @@ All modules already have a working starting implementation. Extend and validate 
 
 **Own:** `src/asd_eeg/features/`, feature configuration.
 
-- Agree on available node channels with Sahil. SFARI BIDS metadata lists F3/F4/P3/P4 directly; `configs/sfari_rest.yaml` keeps their fixed ordering. The generic default remains provisional for other datasets.
+- Agree on available node channels with Sahil. TUOS defaults use F7/Fz/P1/O2 with an 18-window cap. SFARI uses F3/F4/P3/P4: `configs/sfari_rest.yaml` retains 20 windows and `configs/sfari.yaml` retains 18. Preserve each configuration's node/edge order and rebuild archives/bundles when changing dataset or configuration. Verify actual window counts; a cap does not enforce equal duration.
 - Review power normalization, envelope connectivity, filter boundaries, and window aggregation.
 - Check finite values, symmetric graphs, deterministic channel ordering, and the fixed 28-feature contract.
 - Use the generated `feature_schema.json` to explain every feature and to verify feature order.

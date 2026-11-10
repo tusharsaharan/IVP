@@ -13,6 +13,9 @@ dist/
 .streamlit/secrets.toml
 data/raw/
 data/local/
+# Participant manifests and eligibility ledgers are machine-local research outputs.
+data/metadata/*.csv
+!data/metadata/recordings.csv
 artifacts/*
 !artifacts/.gitkeep
 results/*
@@ -26,3 +29,5 @@ results/*
 *.avi
 *.mp4
 .DS_Store
+*.zip
+uv.lock

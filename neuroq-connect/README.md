@@ -1,5 +1,12 @@
 # NeuroQ-Connect — Visualization and Explainability Module
 
+> **Historical standalone handoff.** The maintained implementations and tests are
+> now in the repository-root `src/asd_eeg/` and `tests/`. Install from the root
+> using its `pyproject.toml`; do not install this nested snapshot over the shared
+> `asd_eeg` package. Its original examples/docs are retained for reference and
+> may describe obsolete dependencies, placeholders, or contracts. Root
+> `README.md` and `docs/CONTRACTS.md` are authoritative.
+
 **NeuroQ-Connect: Connectivity-Guided Quantum Kernels for EEG-Based Autism Classification**
 
 This module provides publication-quality scientific figures and explainability tools for the NeuroQ-Connect research project. It is **one component** of a larger pipeline; it handles visualization and sensitivity analysis only.

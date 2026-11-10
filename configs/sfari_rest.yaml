@@ -1,5 +1,6 @@
 # SFARI ds006780 v1.0.0: BIDS sidecars verify these channels, 512 Hz, and 60 Hz mains.
 # Fixed before evaluation. All resting-state BDF runs are pooled within participant.
+# Tushar's 20-window acquisition protocol; configs/sfari.yaml retains Sahil's 18-window run.
 nodes:
   - name: Left frontal
     channels: [F3]

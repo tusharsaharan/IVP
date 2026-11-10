@@ -2,7 +2,10 @@
 
 ## Recording manifest
 
-`data/metadata/recordings.csv` contains one row per recording. Required columns:
+`data/metadata/recordings.csv` is a tracked header-only template. A populated local
+manifest contains one row per recording and stays under ignored `data/local/`.
+Participant lists, eligibility/QC ledgers, raw data, and machine-specific paths must
+not be committed. Required columns:
 
 | Column | Meaning |
 | --- | --- |
@@ -46,7 +49,13 @@ For q nodes, width is `4*q + 2*(q*(q-1)/2)`. For q=4 it is 28.
 2. Edge median correlations in `(0,1), (0,2), (0,3), (1,2), (1,3), (2,3)` order.
 3. Edge IQRs in the same order.
 
-The configured node sequence is authoritative. Channel matching ignores case but does not guess BioSemi/standard-electrode equivalences. Bands must be ordered delta, theta, alpha, beta. Changing feature definitions requires new features and trained bundles.
+The configured node sequence is authoritative. TUOS defaults use F7/Fz/P1/O2,
+50 Hz mains, and an 18-window cap. Both SFARI profiles use F3/F4/P3/P4 and 60 Hz:
+`sfari_rest.yaml` caps at 20, while `sfari.yaml` caps at 18. These configuration IDs
+and their bundles are distinct. A cap is not an exact required duration. Channel
+matching ignores case but does not guess BioSemi/standard-electrode equivalences.
+Bands must be ordered delta, theta, alpha, beta. Changing feature definitions
+requires new features and trained bundles.
 
 Feature archives use numeric arrays `X`, `y`, string `subject_ids`, and JSON `metadata`. They retain configuration, its hash, feature names, provenance, and quality counts. No feature extraction function consumes labels. Schema-1 archives may also contain `connectivity_median`, `connectivity_iqr`, `window_counts`, `accepted_window_counts`, `window_connectivity`, `window_subject_index`, and string `window_recording_ids`. The schema describes every feature's index, source node or edge, units, and aggregation, and must exactly match the configured feature definitions and order. `subject_features.npz` uses the sibling `feature_schema.json`; other archives use `<archive-stem>.feature_schema.json`. Older archives without graph arrays or an embedded schema remain readable, using their original configured feature names. An unrelated shared sidecar is not authoritative for differently named archives. Exact shapes and a team handoff are in [FEATURES.md](FEATURES.md).
 

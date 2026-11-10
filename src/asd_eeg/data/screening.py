@@ -1,7 +1,6 @@
 """Record label-independent QC exclusions before evaluation, using the shared preprocessor."""
 
 import json
-import os
 from datetime import datetime, timezone
 from pathlib import Path
 from uuid import uuid4
@@ -11,6 +10,7 @@ import pandas as pd
 from asd_eeg.config import Config
 from asd_eeg.data.loaders import load_recording
 from asd_eeg.data.manifest import read_manifest
+from asd_eeg.paths import relative_or_absolute
 from asd_eeg.preprocessing.pipeline import preprocess_recording
 
 
@@ -32,8 +32,7 @@ def screen_manifest(manifest: str | Path, config: Config, output: str | Path) ->
     included = pd.DataFrame(accepted, columns=table.columns)
     excluded_subjects = sorted(set(table.subject_id) - set(included.subject_id))
     eligible_path = run / "recordings.csv"
-    included["eeg_path"] = [Path(os.path.relpath(path, run)).as_posix()
-                            for path in included.eeg_path]
+    included["eeg_path"] = [relative_or_absolute(path, run) for path in included.eeg_path]
     included.to_csv(eligible_path, index=False)
     (run / "recording_qc.json").write_text(json.dumps(audit, indent=2), encoding="utf-8")
     pd.DataFrame([{k: v for k, v in row.items() if k != "quality"} for row in audit]).to_csv(

@@ -1,13 +1,13 @@
 """Shared local artifact paths for the command line and Streamlit application."""
 
 import json
-import os
 from pathlib import Path
 
 import numpy as np
 
 from asd_eeg.config import load_config
 from asd_eeg.data.manifest import read_manifest
+from asd_eeg.paths import relative_or_absolute
 
 DEFAULT_PATHS = {"manifest": "data/metadata/recordings.csv", "config": "configs/default.yaml",
                  "features": "artifacts/features/subject_features.npz", "results": "results"}
@@ -58,7 +58,7 @@ def activate_workspace(root: str | Path, manifest: str | Path, config: str | Pat
     if table.data_kind.iloc[0] != "recorded":
         raise ValueError("Activate a recorded-data manifest, not a synthetic software check.")
     load_config(resolved["config"])
-    values = {name: Path(os.path.relpath(value, root)).as_posix()
+    values = {name: relative_or_absolute(value, root)
               for name, value in resolved.items()}
     profile = root / PROFILE
     profile.parent.mkdir(parents=True, exist_ok=True)

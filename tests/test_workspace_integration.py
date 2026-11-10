@@ -197,9 +197,36 @@ def test_matching_feature_archive_is_accepted(completed_check):
     check_feature_workspace(dataset, completed_check["manifest"], config)
 
 
-def test_sfari_configuration_changes_only_the_verified_mains_frequency(config):
+def test_tuos_and_sfari_keep_separate_verified_configs_and_shared_model_settings(config):
     from asd_eeg.config import load_config
 
-    sfari = load_config(ROOT / "configs/sfari_rest.yaml").to_dict()
-    sfari["preprocessing"]["line_hz"] = 50.0
-    assert sfari == config.to_dict()
+    sfari = load_config(ROOT / "configs/sfari_rest.yaml")
+    assert tuple(node.channels for node in config.nodes) == (("F7",), ("Fz",), ("P1",), ("O2",))
+    assert tuple(node.channels for node in sfari.nodes) == (("F3",), ("F4",), ("P3",), ("P4",))
+    assert config.preprocessing.line_hz == 50.0
+    assert sfari.preprocessing.line_hz == 60.0
+    assert config.preprocessing.max_windows == 18
+    assert sfari.preprocessing.max_windows == 20
+    assert config.n_features == sfari.n_features == 28
+    assert config.edges == sfari.edges == ((0, 1), (0, 2), (0, 3), (1, 2), (1, 3), (2, 3))
+    assert config.id != sfari.id
+
+    tuos_settings, sfari_settings = config.to_dict(), sfari.to_dict()
+    for settings in (tuos_settings, sfari_settings):
+        settings.pop("nodes")
+        settings["preprocessing"].pop("line_hz")
+        settings["preprocessing"].pop("max_windows")
+    assert tuos_settings == sfari_settings
+
+
+def test_sfari_protocol_variants_differ_only_in_window_cap():
+    from asd_eeg.config import load_config
+
+    original = load_config(ROOT / "configs/sfari_rest.yaml")
+    sahil = load_config(ROOT / "configs/sfari.yaml")
+    assert original.preprocessing.max_windows == 20
+    assert sahil.preprocessing.max_windows == 18
+    assert original.id != sahil.id
+    settings = sahil.to_dict()
+    settings["preprocessing"]["max_windows"] = 20
+    assert settings == original.to_dict()
