@@ -55,6 +55,11 @@ subject enters scaling, fitting, or training-derived perturbation references.
    edge inputs across all pairs, shared by every subject and both edge statistics.
    Node identity, gate count, and each subject's edge-angle multiset are preserved;
    no "non-adjacent" constraint is imposed. With only one edge the control is identical.
+   The shipped seed (1729) gives permutation `[0, 1, 2, 4, 5, 3]`: the three edges
+   touching node 0 keep their own values and only edges (1,2), (1,3), (2,3) rotate,
+   so the control perturbs half of the graph. It is pinned by a test and unchanged
+   because frozen bundles depend on it; a full derangement would be a new experiment.
+   See `MODEL.md` for the model-owner review.
 
 Four qubits have 16 amplitudes and are classically tractable. Execution uses a
 deterministic PennyLane statevector simulator, not physical quantum hardware;

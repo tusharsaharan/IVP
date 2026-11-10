@@ -37,6 +37,33 @@ def test_node_and_edge_inputs_change_state_and_kernel(config):
     assert not np.allclose(fidelity_kernel(reassigned, reassigned), base)
 
 
+def test_reassigned_control_equals_original_circuit_on_permuted_edge_inputs(config):
+    """The control only relabels edge inputs; node features and gate layout are unchanged."""
+    rng = np.random.default_rng(16)
+    angles = rng.uniform(-1, 1, size=(5, config.n_features))
+    q, n_edges = len(config.nodes), len(config.edges)
+    order = np.random.default_rng(config.circuit.edge_seed).permutation(n_edges)
+    permuted = angles.copy()
+    permuted[:, 4 * q:4 * q + n_edges] = angles[:, 4 * q + order]
+    permuted[:, 4 * q + n_edges:] = angles[:, 4 * q + n_edges + order]
+    np.testing.assert_array_equal(permuted[:, :4 * q], angles[:, :4 * q])
+    for start in (4 * q, 4 * q + n_edges):
+        block = slice(start, start + n_edges)
+        np.testing.assert_array_equal(np.sort(permuted[:, block]), np.sort(angles[:, block]))
+    reassigned = encode_states(angles, config, reassign=True)
+    expected = encode_states(permuted, config)
+    np.testing.assert_allclose(fidelity_kernel(reassigned, expected).diagonal(), 1.0, atol=1e-12)
+
+
+def test_reassignment_permutation_is_pinned_for_saved_bundles(config):
+    """Frozen bundles depend on this exact permutation; seed 1729 leaves three edges fixed."""
+    assert config.circuit.edge_seed == 1729
+    order = np.random.default_rng(1729).permutation(6)
+    assert order.tolist() == [0, 1, 2, 4, 5, 3]
+    moved = [config.edges[k] for k in range(6) if order[k] != k]
+    assert moved == [(1, 2), (1, 3), (2, 3)]
+
+
 def test_amplitude_kernel_matches_documented_formula(config):
     rng = np.random.default_rng(13)
     left = rng.normal(size=(4, config.n_features))

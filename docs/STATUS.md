@@ -184,7 +184,7 @@ guards dataset compatibility, and the node maps differ across cohorts.
 | Owner review | Aryan + Sahil | Review reproduced archive/schema/graphs and documented variable 3–20 windows. Equal duration would require a new experiment. |
 | Owner review | Mahavir + Vivek | Review completed frozen four-model run and passing bundle/OOF checks; do not adopt unavailable historical metrics. |
 | Implemented; interpretation review | Mahavir + Pranav | OOF statistics/seeds/replicates are complete; retain CV-dependence caveats and do not infer equivalence from p=1.0. |
-| High | Vivek | Review actual circuit/encoding, PSD/equivalence/reassignment mathematics, train-reference ordering, and write the model section distinguishing this adaptation from the source paper. |
+| Done (code review) | Vivek | Circuit/encoding independently reimplemented and matched; PSD, amplitude equivalence, reassignment and train-reference ordering checked; model section in `MODEL.md`. Reassignment seed moves only 3 of 6 edges (documented, unchanged). |
 | Software handoff complete | Tushar + Shivam | Real raw-input CLI/app/OOF agreement, figures, JSON and sensitivity verified. Review captions/limits for presentation. |
 | Content approval / delivery verification | Pranav + all owners | Revised Word/PPT/PDF copies describe implemented method and honest results. Laptop AVI decoding passed; source-snapshot/package hashes and extracted checks are tracked locally. Faculty/team approval remains required; no clinical/final-cohort approval implied. |
 
